@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { menuLinks } from "./ScaffoldHeader";
 import { BrainCircuit } from "lucide-react";
 import { hardhat } from "viem/chains";
-import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
+import { FaucetButton } from "~~/components/scaffold-eth";
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
 
 export const HeaderMenuLinks = () => {
@@ -78,7 +78,7 @@ export const Header = () => {
         </ul>
       </div>
       <div className="navbar-end grow mr-4">
-        <RainbowKitCustomConnectButton />
+        {/* <RainbowKitCustomConnectButton /> */}
         {isLocalNetwork && <FaucetButton />}
       </div>
     </div>
