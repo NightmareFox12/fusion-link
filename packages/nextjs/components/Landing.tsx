@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import Coin3D from "./Coin3d";
-import { RainbowKitCustomConnectButton } from "./scaffold-eth";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
 // import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { ArrowRight, Lock, Shield, TrendingUp, Users, Wallet, Zap } from "lucide-react";
 // import { Badge } from "~~/components/shadcn/ui/badge";
@@ -62,8 +62,7 @@ export default function Landing() {
               Unleash the power of bridgeless swaps. A new way to receive crypto without limits or friction.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <RainbowKitCustomConnectButton />
-              {/* <ConnectButton.Custom>
+              <ConnectButton.Custom>
                 {({ openConnectModal }) => {
                   return (
                     <Button
@@ -74,7 +73,7 @@ export default function Landing() {
                     </Button>
                   );
                 }}
-              </ConnectButton.Custom> */}
+              </ConnectButton.Custom>
               {/* <Button
                 size="lg"
                 className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 text-lg"

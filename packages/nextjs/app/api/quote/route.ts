@@ -147,29 +147,24 @@
 // //   console.log(err);
 // //   return Response.json(err, { status: 400 });
 // // }
-import {
-  HashLock,
-  NetworkEnum,
-  OrderStatus,
-  PresetEnum,
-  PrivateKeyProviderConnector,
-  SDK,
-} from "@1inch/cross-chain-sdk";
+import { HashLock, NetworkEnum, OrderStatus, PresetEnum, SDK } from "@1inch/cross-chain-sdk";
 import { randomBytes } from "node:crypto";
-import Web3 from "web3";
+// import Web3 from "web3";
+import { FusionProvider } from "~~/hooks/fusion";
 
-const privateKey = "0x";
-const rpc = "https://ethereum-rpc.publicnode.com";
+// const privateKey = "0x";
+// const rpc = "https://ethereum-rpc.publicnode.com";
 const authKey = process.env.ONENCH_KEY;
 const source = "pay-fusion";
 
-const web3 = new Web3(rpc);
-const walletAddress = web3.eth.accounts.privateKeyToAccount(privateKey).address;
+// const web3 = new Web3(rpc);
+const walletAddress = "0xD2692F9df925D18D527ABe8b3d99EE9E9C8d75AE";
 
 const sdk = new SDK({
   url: "https://api.1inch.dev/fusion-plus",
   authKey,
-  blockchainProvider: new PrivateKeyProviderConnector(privateKey, web3), // only required for order creation
+  blockchainProvider: new FusionProvider(),
+  // new PrivateKeyProviderConnector(privateKey, web3), // only required for order creation
 });
 
 export async function GET() {
@@ -245,6 +240,8 @@ export async function GET() {
   const statusResponse = await sdk.getOrderStatus(hash);
 
   console.log(statusResponse);
+
+  return Response.json({ response: "napendeja" });
   // }
 
   // main();
