@@ -21,7 +21,9 @@ export const DialogChangeOp: React.FC = () => {
     try {
       const req = await fetch("api/quote");
 
-      console.log(req);
+      // if (req.status != 200) throw Error("Error en la peticion");
+      const res = await req.json();
+      console.log(res);
     } catch (err) {
       console.log(err);
     } finally {
