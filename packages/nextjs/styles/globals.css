@@ -273,3 +273,15 @@
     @apply bg-gradient-to-bl from-purple-900 to-slate-900 text-white px-4 py-2 rounded hover:from-purple-900/80 hover:to-slate-900/80;
   }
 }
+
+@layer utilities {
+  .no-spinner::-webkit-outer-spin-button,
+  .no-spinner::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .no-spinner {
+    -moz-appearance: textfield;
+  }
+}

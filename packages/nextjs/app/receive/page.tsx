@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { DialogChangeOp } from "./_components/DialogChangeOp";
+import { useEffect, useMemo, useState } from "react";
+// import { DialogChangeOp } from "./_components/DialogChangeOp";
 import { NetworkIcon, TokenIcon } from "@web3icons/react";
-import { ArrowDownUp, Coins, Info, Loader, Mail, Network, Wallet, WalletMinimalIcon } from "lucide-react";
+import { ArrowDownUp, Coins, Info, Mail, Network, Wallet, WalletMinimalIcon } from "lucide-react";
 import { NextPage } from "next";
-import { formatEther } from "viem";
+import { formatEther, keccak256, toBytes } from "viem";
 // import QRcode from "qrcode";
 import { useAccount } from "wagmi";
 import { Address } from "~~/components/scaffold-eth";
@@ -17,8 +17,10 @@ import { Label } from "~~/components/shadcn/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~~/components/shadcn/ui/select";
 // import { Separator } from "~~/components/shadcn/ui/separator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "~~/components/shadcn/ui/tooltip";
+import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+
 // import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth/useScaffoldWriteContract";
-import { useWatchBalance } from "~~/hooks/scaffold-eth/useWatchBalance";
+// import { useWatchBalance } from "~~/hooks/scaffold-eth/useWatchBalance";
 
 const networks = [
   { label: "Ethereum", chainId: 1, icon: "ethereum" },
@@ -39,57 +41,57 @@ const networks = [
 //Con fusion+ en ehterlink cross-chain. Como fusion es chimbin y aun no tiene etherlink tambien hay que hacer un tal Atomic Swap with Hashlock/Timelock for Intent-Based Execution
 
 const tokens = [
+  { value: "eth", label: "  Ether", symbol: "ETH", icon: "eth" },
   { value: "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4", label: "USDC", symbol: "USDC", icon: "usdc" },
   { value: "0x68f180fcce6836688e9084f035309e29bf0a2095", label: "Tether", symbol: "USDT", icon: "usdt" },
-  { value: "eth", label: "Ethereum", symbol: "ETH", icon: "eth" },
-  { value: "0xeeeeeb57642040be42185f49c52f7e9b38f8eeee", label: "Optimis", symbol: "OP", icon: "op" },
+  { value: "0xeeeeeb57642040be42185f49c52f7e9b38f8eeee", label: "Optimism", symbol: "OP", icon: "op" },
 ] as const;
 
 const ReceivePage: NextPage = () => {
   const { address, connector } = useAccount();
 
-  const { data: balance, isLoading } = useWatchBalance({
-    address,
-  });
+  // const { data: balance, isLoading } = useWatchBalance({
+  //   address,
+  // });
 
   //states
-  const [originNetwork, setOriginNetwork] = useState<string>("");
-  const [destinationNetwork, setDestinationNetwork] = useState<string>("");
-  const [originToken, setOriginToken] = useState<string>("");
-  const [destinationToken, setDestinationToken] = useState<string>("");
+  const [fromNetwork, setFromNetwork] = useState<string>("");
+  const [toNetwork, setToNetwork] = useState<string>("");
+  const [fromToken, setFromToken] = useState<string>("");
+  const [toToken, setToToken] = useState<string>("");
+  const [fromAmount, setFromAmount] = useState<string>("");
 
   //TODO: seguir avergiando lo del cross chain swap
-  const [, setReceiveAddress] = useState<string>("");
+  // const [receiveAddress, setReceiveAddress] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [showLongAddress, setShowLongAddress] = useState<boolean>(false);
 
   //smart contract
-  // const { writeContractAsync: writeSwapFactoryAsync } = useScaffoldWriteContract({ contractName: "SwapFactory" });
+  const { writeContractAsync: writeSwapFactoryAsync } = useScaffoldWriteContract({ contractName: "SwapFactory" });
 
   //functions
   const handleSubmit = async () => {
-    if (originNetwork === "" || destinationNetwork === "") return;
+    if (fromNetwork === "" || toNetwork === "") return;
 
     // Convertir el secreto a bytes
-    // const secret = "my-super-secret-key"; // puede ser un string, un número, un hex...
-    // const secretBytes = toBytes(secret);
-    // Calcular el hashlock
-    // const hashlock = keccak256(secretBytes);
+    const secret = "my-super-secret-key"; // puede ser un string, un número, un hex...
+    const secretBytes = toBytes(secret);
+    const hashlock = keccak256(secretBytes);
 
     try {
-      // await writeSwapFactoryAsync({
-      //   functionName: "createSwap",
-      //   args: [
-      //     hashlock, // Hash del secreto
-      //     3600, // 1 hora
-      //     "0xReceiverAddress...", // Destinatario
-      //     "0xExecutorAddress...", // Ejecutor
-      //     "0xTokenAddress...", // Contrato del token
-      //     formatEther(100000000000000n), // Monto en tokens
-      //   ],
-      // });
+      await writeSwapFactoryAsync({
+        functionName: "createSwap",
+        args: [
+          hashlock, // Hash del secreto
+          3600, // 1 hora
+          "0xReceiverAddress...", // Destinatario
+          "0xExecutorAddress...", // Ejecutor
+          "0xTokenAddress...", // Contrato del token
+          formatEther(100000000000000n), // Monto en tokens
+        ],
+      });
 
-      setReceiveAddress(""); //TODO: esto no va aqui
+      // setReceiveAddress(""); //TODO: esto no va aqui
       //TODO: crear el smart contract para guardar las preferencias incluyendo un state private para el email
       //TODO: crear otra function para que el usuario pueda editar su preferencias al recibir el dinero
 
@@ -182,6 +184,11 @@ const ReceivePage: NextPage = () => {
   // const selectedTokenData = tokens.find(t => t.value === selectedToken);
   // const selectedNetworkData = networks.find(n => n.chainId.toString() === selectedNetwork);
 
+  //memos
+  const tokenSelected = useMemo(() => {
+    return tokens.find(t => t.value === fromToken);
+  }, [fromToken]);
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
       <div className="max-w-2xl mx-auto space-y-6">
@@ -206,7 +213,7 @@ const ReceivePage: NextPage = () => {
 
           <CardContent className="space-y-6">
             {/* Balance session  */}
-            {isLoading || balance === undefined ? (
+            {/* {isLoading || balance === undefined ? (
               <div className="w-full flex justify-center gap-2">
                 <Loader className="animate-spin" />
                 <span className="text-sm font-semibold">Loading Balance...</span>
@@ -215,20 +222,21 @@ const ReceivePage: NextPage = () => {
               <div className="w-full flex justify-center gap-2">
                 <DialogChangeOp />
               </div>
-            )}
+            )} */}
 
-            {/* Origin Network */}
-            <div className="space-y-2">
-              <Label htmlFor="network" className="flex items-center gap-2">
-                <Network className="h-4 w-4" />
-                Origin Network<span className="text-red-500 font-semibold">*</span>
-              </Label>
-              <Select value={originNetwork} onValueChange={setOriginNetwork}>
-                <SelectTrigger className="w-full" id="network">
-                  <SelectValue placeholder="Select a network" />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* {networks.map(network => (
+            <div className="flex space-y-2 gap-4">
+              {/* Origin Network */}
+              <div className="flex-1">
+                <Label htmlFor="network" className="flex items-center gap-2 py-2">
+                  <Network className="h-4 w-4" />
+                  Origin Network<span className="text-red-500 font-semibold">*</span>
+                </Label>
+                <Select value={fromNetwork} onValueChange={setFromNetwork}>
+                  <SelectTrigger className="w-full py-6" id="network">
+                    <SelectValue placeholder="Select a network" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* {networks.map(network => (
                     <SelectItem key={network.chainId} value={network.chainId.toString()} className="cursor-pointer">
                       <div className="flex items-center gap-2">
                         <NetworkIcon id={network.icon} variant="branded" />
@@ -237,33 +245,88 @@ const ReceivePage: NextPage = () => {
                       </div>
                     </SelectItem>
                   ))} */}
-                  <SelectItem
-                    key={networks[3].chainId}
-                    value={networks[3].chainId.toString()}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <NetworkIcon id={networks[3].icon} variant="branded" />
-                      <span>{networks[3].label}</span>
-                      <Badge variant="outline">Chain {networks[3].chainId}</Badge>
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                    <SelectItem
+                      key={networks[3].chainId}
+                      value={networks[3].chainId.toString()}
+                      className="cursor-pointer p-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <NetworkIcon id={networks[3].icon} variant="branded" className="size-8" />
+                        <span className="">{networks[3].label}</span>
+                        <Badge variant="outline">Chain {networks[3].chainId}</Badge>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Origin Token */}
+              <div className="flex-1">
+                <Label htmlFor="token" className="flex items-center gap-2 py-2">
+                  <Coins className="h-4 w-4" />
+                  Origin Token<span className="text-red-500 font-semibold">*</span>
+                </Label>
+                <Select value={fromToken} onValueChange={setFromToken}>
+                  <SelectTrigger className="w-full py-6" id="token">
+                    <SelectValue placeholder="Selecciona un token" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tokens.map(token => (
+                      <SelectItem key={token.value} value={token.value} className="cursor-pointer p-2">
+                        <div className="flex items-center gap-2">
+                          <TokenIcon symbol={token.symbol} variant="branded" size={40} className="size-8" />
+                          <span>{token.label}</span>
+                          <Badge variant="secondary">{token.symbol}</Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            {/* Destination Network */}
+            {/* Amount  */}
             <div className="space-y-2">
-              <Label htmlFor="network" className="flex items-center gap-2">
-                <Network className="h-4 w-4" />
-                Destination Network<span className="text-red-500 font-semibold">*</span>
+              <Label htmlFor="token" className="flex items-center gap-2">
+                <Coins className="h-4 w-4" />
+                Amount<span className="text-red-500 font-semibold">*</span>
               </Label>
-              <Select value={destinationNetwork} onValueChange={setDestinationNetwork}>
-                <SelectTrigger className="w-full" id="network">
-                  <SelectValue placeholder="Selecciona una red" />
-                </SelectTrigger>
-                <SelectContent>
-                  {networks.map(network => (
+
+              <div className="relative mb-0">
+                <Input
+                  type="number"
+                  placeholder="0.00"
+                  value={fromAmount}
+                  className="pr-16 no-spinner"
+                  onChange={e => {
+                    setFromAmount(e.target.value);
+                  }}
+                  disabled={tokenSelected === undefined}
+                />
+                {fromToken && (
+                  <Badge variant="secondary" className="absolute right-2 top-1/2 -translate-y-1/2 text-xs">
+                    {tokenSelected?.symbol}
+                  </Badge>
+                )}
+              </div>
+              {parseInt(fromAmount) < 0 && (
+                <span className="text-red-500 font-semibold text-sm ps-2">Invalid amount</span>
+              )}
+            </div>
+
+            <div className="flex space-y-2 gap-4">
+              {/* To Network */}
+              <div className="flex-1">
+                <Label htmlFor="network" className="flex items-center gap-2 py-2">
+                  <Network className="h-4 w-4" />
+                  Destination Network<span className="text-red-500 font-semibold">*</span>
+                </Label>
+                <Select value={toNetwork} onValueChange={setToNetwork}>
+                  <SelectTrigger className="w-full py-6" id="network">
+                    <SelectValue placeholder="Select a network" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* {networks.map(network => (
                     <SelectItem key={network.chainId} value={network.chainId.toString()} className="cursor-pointer">
                       <div className="flex items-center gap-2">
                         <NetworkIcon id={network.icon} variant="branded" />
@@ -271,67 +334,45 @@ const ReceivePage: NextPage = () => {
                         <Badge variant="outline">Chain {network.chainId}</Badge>
                       </div>
                     </SelectItem>
-                  ))}
-                  {/* <SelectItem
-                    key={networks[3].chainId}
-                    value={networks[3].chainId.toString()}
-                    className="cursor-pointer"
-                  >
-                    <div className="flex items-center gap-2">
-                      <NetworkIcon id={networks[3].icon} variant="branded" />
-                      <span>{networks[3].label}</span>
-                      <Badge variant="outline">Chain {networks[3].chainId}</Badge>
-                    </div>
-                  </SelectItem> */}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Origin Token */}
-            <div className="space-y-2">
-              <Label htmlFor="token" className="flex items-center gap-2">
-                <Coins className="h-4 w-4" />
-                Token de Origen<span className="text-red-500 font-semibold">*</span>
-              </Label>
-              <Select value={originToken} onValueChange={setOriginToken}>
-                <SelectTrigger className="w-full" id="token">
-                  <SelectValue placeholder="Selecciona un token" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tokens.map(token => (
-                    <SelectItem key={token.value} value={token.value} className="cursor-pointer">
+                  ))} */}
+                    <SelectItem
+                      key={networks[3].chainId}
+                      value={networks[3].chainId.toString()}
+                      className="cursor-pointer p-2"
+                    >
                       <div className="flex items-center gap-2">
-                        <TokenIcon symbol={token.symbol} variant="branded" size={30} />
-                        <span>{token.label}</span>
-                        <Badge variant="secondary">{token.symbol}</Badge>
+                        <NetworkIcon id={networks[3].icon} variant="branded" className="size-8" />
+                        <span className="">{networks[3].label}</span>
+                        <Badge variant="outline">Chain {networks[3].chainId}</Badge>
                       </div>
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="token" className="flex items-center gap-2">
-                <Coins className="h-4 w-4" />
-                Token de Destino<span className="text-red-500 font-semibold">*</span>
-              </Label>
-              <Select value={destinationToken} onValueChange={setDestinationToken}>
-                <SelectTrigger className="w-full" id="token">
-                  <SelectValue placeholder="Selecciona un token" />
-                </SelectTrigger>
-                <SelectContent>
-                  {tokens.map(token => (
-                    <SelectItem key={token.value} value={token.value} className="cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <TokenIcon symbol={token.symbol} variant="branded" size={30} />
-                        <span>{token.label}</span>
-                        <Badge variant="secondary">{token.symbol}</Badge>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {/* Destination Token */}
+              <div className="flex-1">
+                <Label htmlFor="token" className="flex items-center gap-2 py-2">
+                  <Coins className="h-4 w-4" />
+                  Destination Token<span className="text-red-500 font-semibold">*</span>
+                </Label>
+                <Select value={toToken} onValueChange={setToToken}>
+                  <SelectTrigger className="w-full py-6" id="token">
+                    <SelectValue placeholder="Selecciona un token" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tokens.map(token => (
+                      <SelectItem key={token.value} value={token.value} className="cursor-pointer p-2">
+                        <div className="flex items-center gap-2">
+                          <TokenIcon symbol={token.symbol} variant="branded" size={40} className="size-8" />
+                          <span>{token.label}</span>
+                          <Badge variant="secondary">{token.symbol}</Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {connector !== undefined && (
@@ -379,7 +420,7 @@ const ReceivePage: NextPage = () => {
               onClick={handleSubmit}
               className="w-full bg-gradient"
               size="lg"
-              disabled={originNetwork === "" || destinationNetwork === ""}
+              disabled={fromNetwork === "" || toNetwork === ""}
             >
               Generate order
             </Button>
