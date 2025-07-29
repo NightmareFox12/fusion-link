@@ -19,7 +19,7 @@ export const DialogChangeOp: React.FC = () => {
   //functions
   const handleAlgo = async () => {
     try {
-      const req = await fetch("api/quote");
+      const req = await fetch("api/order");
 
       // if (req.status != 200) throw Error("Error en la peticion");
       const res = await req.json();

@@ -18,9 +18,9 @@ const scaffoldConfig = {
   targetNetworks: [
     // chains.optimism, chains.arbitrum, chains.base,
     // chains.etherlinkTestnet,
-    chains.etherlink,
+    // chains.etherlink,
     // chains.optimismSepolia,
-    // chains.optimism,
+    chains.optimism,
   ],
   // The interval at which your front-end polls the RPC servers for new data (it has no effect if you only target the local network (default is 4000))
   pollingInterval: 30000,

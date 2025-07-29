@@ -1,42 +1,23 @@
-// import { CrossChainOrder, OrderStatus } from "@1inch/cross-chain-sdk";
-// import { fusionSdk } from "~~/utils/customFusionSdk";
+const ONENCH_KEY = process.env.ONENCH_KEY;
 
-// const sdk = fusionSdk;
-
-// async function sleep(ms: number): Promise<void> {
-//   return new Promise(resolve => setTimeout(resolve, ms));
-// }
-
-//BUSCAR LA FORMA DE PASAR EL ORDER
 export async function GET(request: Request) {
   try {
     console.log(request);
-    // const order = new CrossChainOrder();
 
-    // submit order
-    // const _orderInfo = await sdk.submitOrder(quote.srcChainId, order, quoteId, secretHashes);
-    // console.log(_orderInfo);
-    // console.log({ hash }, "order submitted");
-    // // submit secrets for deployed escrows
+    const req = await fetch(
+      "https://api.1inch.dev/fusion/quoter/v2.0/10/quote/receive?chain=10&fromTokenAddress=0x7f5c764cbc14f9669b88837ca1490cca17c31607&toTokenAddress=0x94b008aa00579c1307b0ef2c499ad98a8ce58e58&amount=100000000000000&walletAddress=0xD2692F9df925D18D527ABe8b3d99EE9E9C8d75AE&enableEstimate=false",
+      {
+        headers: {
+          Authorization: `Bearer ${ONENCH_KEY}`,
+        },
+      },
+    );
 
-    // while (true) {
-    //   const secretsToShare = await sdk.getReadyToAcceptSecretFills(hash);
-    //   if (secretsToShare.fills.length) {
-    //     for (const { idx } of secretsToShare.fills) {
-    //       await sdk.submitSecret(hash, secrets[idx]);
-    //       console.log({ idx }, "shared secret");
-    //     }
-    //   }
-    //   // check if order finished
-    //   const { status } = await sdk.getOrderStatus(hash);
-    //   if (status === OrderStatus.Executed || status === OrderStatus.Expired || status === OrderStatus.Refunded) {
-    //     break;
-    //   }
-    //   await sleep(1000);
-    // }
+    const res = await req.json();
 
-    // const statusResponse = await sdk.getOrderStatus(hash);
-    // console.log(statusResponse);
+    console.log(res);
+
+    return Response.json({ higado: "si" });
   } catch (err) {
     console.log(err);
     return Response.json({ err: err }, { status: 400 });

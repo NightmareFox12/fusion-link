@@ -183,7 +183,7 @@ const ReceivePage: NextPage = () => {
                 <Loader className="animate-spin" />
                 <span className="text-sm font-semibold">Loading Balance...</span>
               </div>
-            ) : parseFloat(formatEther(balance.value ?? 0n)) > 0 ? null : (
+            ) : parseFloat(formatEther(balance.value ?? 0n)) < 0 ? null : (
               <div className="w-full flex justify-center gap-2">
                 <DialogChangeOp />
               </div>
