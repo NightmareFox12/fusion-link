@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   128123: {
     PayFusion: {
-      address: "0xC7FC653F16ee2562Db025a67Ad8349620D417d7e",
+      address: "0xcd62452DB498BD0eaAF7Dd2D92c68a6bDdC11Eb0",
       abi: [
         {
           inputs: [
@@ -201,7 +201,7 @@ const deployedContracts = {
       },
     },
     SwapFactory: {
-      address: "0x60b61B71019E6F4C58f9fa13F92f19527Ae64E6c",
+      address: "0x7E8f888a45F77FfdC33c6C69271763D7C246fF30",
       abi: [
         {
           anonymous: false,
@@ -280,11 +280,6 @@ const deployedContracts = {
             {
               internalType: "address",
               name: "receiver",
-              type: "address",
-            },
-            {
-              internalType: "address",
-              name: "executor",
               type: "address",
             },
             {

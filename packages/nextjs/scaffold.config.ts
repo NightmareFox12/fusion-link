@@ -20,7 +20,7 @@ const scaffoldConfig = {
     // chains.etherlinkTestnet,
     // chains.etherlink,
     // chains.optimismSepolia,
-    chains.optimism,
+    chains.etherlinkTestnet,
   ],
   // The interval at which your front-end polls the RPC servers for new data (it has no effect if you only target the local network (default is 4000))
   pollingInterval: 30000,

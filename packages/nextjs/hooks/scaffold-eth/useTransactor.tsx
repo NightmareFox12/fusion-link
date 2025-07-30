@@ -16,12 +16,7 @@ type TransactionFunc = (
  * Custom notification content for TXs.
  */
 // const TxnNotification = ({ message, blockExplorerLink }: { message: string; blockExplorerLink?: string }) => {
-//   useEffect(() => {
-//     console.log("first");
-//     toast(message);
-//   }, [message]);
 //   return (
-//     <Toaster />
 // <div className={`flex flex-col ml-1 cursor-default`}>
 //   <p className="my-0">{message}</p>
 //   {blockExplorerLink && blockExplorerLink.length > 0 ? (
@@ -95,6 +90,15 @@ export const useTransactor = (_walletClient?: WalletClient): TransactionFunc => 
           loading: "Waiting",
           success: "Transaction completed successfully!",
           closeButton: true,
+          action:
+            blockExplorerTxURL && blockExplorerTxURL.length > 0
+              ? {
+                  label: "Check out transaction",
+                  onClick: () => {
+                    window.open(blockExplorerTxURL, "_blank", "noopener,noreferrer");
+                  },
+                }
+              : null,
         })
         .toString();
 

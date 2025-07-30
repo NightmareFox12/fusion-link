@@ -1,26 +1,20 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-// import { DialogChangeOp } from "./_components/DialogChangeOp";
+import DialogSwapProgress from "./_components/DialogProgress";
 import { NetworkIcon, TokenIcon } from "@web3icons/react";
-import { ArrowDownUp, Coins, Info, Mail, Network, Wallet, WalletMinimalIcon } from "lucide-react";
+import { ArrowDownUp, Coins, Loader, Network, Wallet, WalletMinimalIcon } from "lucide-react";
 import { NextPage } from "next";
-import { formatEther, keccak256, toBytes } from "viem";
 // import QRcode from "qrcode";
 import { useAccount } from "wagmi";
 import { Address } from "~~/components/scaffold-eth";
 import { Badge } from "~~/components/shadcn/ui/badge";
-import { Button } from "~~/components/shadcn/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~~/components/shadcn/ui/card";
 import { Input } from "~~/components/shadcn/ui/input";
 import { Label } from "~~/components/shadcn/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~~/components/shadcn/ui/select";
 // import { Separator } from "~~/components/shadcn/ui/separator";
-import { Tooltip, TooltipContent, TooltipTrigger } from "~~/components/shadcn/ui/tooltip";
-import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
-
-// import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth/useScaffoldWriteContract";
-// import { useWatchBalance } from "~~/hooks/scaffold-eth/useWatchBalance";
+import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
 
 const networks = [
   { label: "Ethereum", chainId: 1, icon: "ethereum" },
@@ -41,10 +35,11 @@ const networks = [
 //Con fusion+ en ehterlink cross-chain. Como fusion es chimbin y aun no tiene etherlink tambien hay que hacer un tal Atomic Swap with Hashlock/Timelock for Intent-Based Execution
 
 const tokens = [
-  { value: "eth", label: "  Ether", symbol: "ETH", icon: "eth" },
+  { value: "eth", label: "Ether", symbol: "ETH", icon: "eth" },
   { value: "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4", label: "USDC", symbol: "USDC", icon: "usdc" },
   { value: "0x68f180fcce6836688e9084f035309e29bf0a2095", label: "Tether", symbol: "USDT", icon: "usdt" },
   { value: "0xeeeeeb57642040be42185f49c52f7e9b38f8eeee", label: "Optimism", symbol: "OP", icon: "op" },
+  { value: "0x4C2AA252BEe766D3399850569713b55178934849", label: "USDC Testnet", symbol: "USDC", icon: "bnb" },
 ] as const;
 
 const ReceivePage: NextPage = () => {
@@ -62,45 +57,43 @@ const ReceivePage: NextPage = () => {
   const [fromAmount, setFromAmount] = useState<string>("");
 
   //TODO: seguir avergiando lo del cross chain swap
-  // const [receiveAddress, setReceiveAddress] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
   const [showLongAddress, setShowLongAddress] = useState<boolean>(false);
 
   //smart contract
-  const { writeContractAsync: writeSwapFactoryAsync } = useScaffoldWriteContract({ contractName: "SwapFactory" });
+  const { data: swapFactoryContract, isLoading } = useDeployedContractInfo({ contractName: "SwapFactory" });
 
   //functions
-  const handleSubmit = async () => {
-    if (fromNetwork === "" || toNetwork === "") return;
+  // const handleSubmit = async () => {
+  //   if (fromNetwork === "" || toNetwork === "") return;
 
-    // Convertir el secreto a bytes
-    const secret = "my-super-secret-key"; // puede ser un string, un número, un hex...
-    const secretBytes = toBytes(secret);
-    const hashlock = keccak256(secretBytes);
+  //   // Convertir el secreto a bytes
+  //   const secret = "my-super-secret-key"; // puede ser un string, un número, un hex...
+  //   const secretBytes = toBytes(secret);
+  //   const hashlock = keccak256(secretBytes);
 
-    try {
-      await writeSwapFactoryAsync({
-        functionName: "createSwap",
-        args: [
-          hashlock, // Hash del secreto
-          3600, // 1 hora
-          "0xReceiverAddress...", // Destinatario
-          "0xExecutorAddress...", // Ejecutor
-          "0xTokenAddress...", // Contrato del token
-          formatEther(100000000000000n), // Monto en tokens
-        ],
-      });
+  //   try {
+  //     await writeSwapFactoryAsync({
+  //       functionName: "createSwap",
+  //       args: [
+  //         hashlock, // Hash del secreto
+  //         3600, // 1 hora
+  //         "0xReceiverAddress...", // Destinatario
+  //         "0xExecutorAddress...", // Ejecutor
+  //         "0xTokenAddress...", // Contrato del token
+  //         formatEther(100000000000000n), // Monto en tokens
+  //       ],
+  //     });
 
-      // setReceiveAddress(""); //TODO: esto no va aqui
-      //TODO: crear el smart contract para guardar las preferencias incluyendo un state private para el email
-      //TODO: crear otra function para que el usuario pueda editar su preferencias al recibir el dinero
+  //     // setReceiveAddress(""); //TODO: esto no va aqui
+  //     //TODO: crear el smart contract para guardar las preferencias incluyendo un state private para el email
+  //     //TODO: crear otra function para que el usuario pueda editar su preferencias al recibir el dinero
 
-      //TODO: debo ver como crear el codigo QR y empezar a ahacer lo del send
-    } catch (err) {
-      console.log(err);
-    } finally {
-    }
-  };
+  //     //TODO: debo ver como crear el codigo QR y empezar a ahacer lo del send
+  //   } catch (err) {
+  //     console.log(err);
+  //   } finally {
+  //   }
+  // };
 
   // const generateReceiveAddress = () => {
   //   if (!selectedToken || !selectedNetwork) {
@@ -285,7 +278,7 @@ const ReceivePage: NextPage = () => {
               </div>
             </div>
 
-            {/* Amount  */}
+            {/* Amount */}
             <div className="space-y-2">
               <Label htmlFor="token" className="flex items-center gap-2">
                 <Coins className="h-4 w-4" />
@@ -297,7 +290,7 @@ const ReceivePage: NextPage = () => {
                   type="number"
                   placeholder="0.00"
                   value={fromAmount}
-                  className="pr-16 no-spinner"
+                  className="pr-16 no-spinner py-6 text-lg font-semibold"
                   onChange={e => {
                     setFromAmount(e.target.value);
                   }}
@@ -387,48 +380,34 @@ const ReceivePage: NextPage = () => {
               </div>
             )}
 
-            {/* Email (Optional) */}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="flex justify-between">
-                <div className="flex gap-2">
-                  <Mail className="w-4 h-4" />
-                  Email (Optional)
-                </div>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button size={"icon"} variant="ghost">
-                      <Info />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="font-semibold">
-                      Register your email address to receive a notification when the transaction is completed.
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              </Label>
-              <Input
-                id="email"
-                placeholder="example@gmail.com"
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-              />
-            </div>
-
-            <Button
+            {/* <Button
               onClick={handleSubmit}
               className="w-full bg-gradient"
               size="lg"
               disabled={fromNetwork === "" || toNetwork === ""}
             >
               Generate order
-            </Button>
+            </Button> */}
+            {isLoading ? (
+              <div className="flex justify-center">
+                <Loader className="animate-spin" />
+              </div>
+            ) : (
+              <div className="flex justify-center">
+                <DialogSwapProgress factoryAddress={swapFactoryContract?.address} amount={fromAmount} />
+              </div>
+            )}
           </CardContent>
         </Card>
+      </div>
+    </main>
+  );
+};
 
-        {/* Receive Address Display */}
-        {/* {receiveAddress && (
+export default ReceivePage;
+
+{
+  /* {receiveAddress && (
           <Card className="shadow-lg">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-green-800">
@@ -438,7 +417,7 @@ const ReceivePage: NextPage = () => {
               <CardDescription className="text-green-700">Envía tus criptomonedas a esta dirección</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Selected Configuration 
+              Selected Configuration 
               <div className="flex flex-wrap gap-2">
                 {selectedTokenData && (
                   <Badge variant="default" className="bg-blue-100 text-blue-800">
@@ -450,7 +429,7 @@ const ReceivePage: NextPage = () => {
                     {selectedNetwork} {selectedNetworkData.chainId}
                   </Badge>
                 )}
-                {/* {amount && (
+                {amount && (
                   <Badge variant="outline">
                     {amount} {selectedTokenData?.symbol}
                   </Badge>
@@ -459,7 +438,7 @@ const ReceivePage: NextPage = () => {
 
               <Separator />
 
-              {/* Address 
+              Address 
               <div className="space-y-2">
                 <Label>Dirección de Recepción</Label>
                 <div className="flex gap-2">
@@ -470,7 +449,7 @@ const ReceivePage: NextPage = () => {
                 </div>
               </div>
 
-              {/* QR Code Placeholder 
+              QR Code Placeholder 
               <div className="flex justify-center">
                 <div className="w-48 h-48 bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
                   <div className="text-center text-gray-500">
@@ -481,7 +460,7 @@ const ReceivePage: NextPage = () => {
                 </div>
               </div>
 
-              {/* Warning 
+              Warning 
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <div className="flex items-start gap-2">
                   <div className="text-yellow-600 mt-0.5">⚠️</div>
@@ -499,10 +478,5 @@ const ReceivePage: NextPage = () => {
               </div>
             </CardContent>
           </Card>
-        )} */}
-      </div>
-    </main>
-  );
-};
-
-export default ReceivePage;
+        )} */
+}
