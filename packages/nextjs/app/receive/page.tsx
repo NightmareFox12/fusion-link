@@ -23,6 +23,14 @@ const networks = [
   { label: "Etherlink", chainId: 42793, icon: "etherlink" },
 ] as const;
 
+const tokens = [
+  { value: "eth", label: "Ether", symbol: "ETH", icon: "eth" },
+  { value: "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4", label: "USDC", symbol: "USDC", icon: "usdc" },
+  { value: "0x68f180fcce6836688e9084f035309e29bf0a2095", label: "Tether", symbol: "USDT", icon: "usdt" },
+  { value: "0xeeeeeb57642040be42185f49c52f7e9b38f8eeee", label: "Optimism", symbol: "OP", icon: "op" },
+  { value: "0x4C2AA252BEe766D3399850569713b55178934849", label: "USDC Testnet", symbol: "USDC", icon: "bnb" },
+] as const;
+
 // [Usuario inicia swap de USDC en Etherlink]
 //         ↓
 // [AtomicSwapIntent asegura la operación con hashlock]
@@ -33,14 +41,6 @@ const networks = [
 //         ↓
 // [Usuario recibe USDT en red destino]
 //Con fusion+ en ehterlink cross-chain. Como fusion es chimbin y aun no tiene etherlink tambien hay que hacer un tal Atomic Swap with Hashlock/Timelock for Intent-Based Execution
-
-const tokens = [
-  { value: "eth", label: "Ether", symbol: "ETH", icon: "eth" },
-  { value: "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4", label: "USDC", symbol: "USDC", icon: "usdc" },
-  { value: "0x68f180fcce6836688e9084f035309e29bf0a2095", label: "Tether", symbol: "USDT", icon: "usdt" },
-  { value: "0xeeeeeb57642040be42185f49c52f7e9b38f8eeee", label: "Optimism", symbol: "OP", icon: "op" },
-  { value: "0x4C2AA252BEe766D3399850569713b55178934849", label: "USDC Testnet", symbol: "USDC", icon: "bnb" },
-] as const;
 
 const ReceivePage: NextPage = () => {
   const { address, connector } = useAccount();
@@ -388,13 +388,18 @@ const ReceivePage: NextPage = () => {
             >
               Generate order
             </Button> */}
-            {isLoading ? (
+            {isLoading || address === undefined ? (
               <div className="flex justify-center">
                 <Loader className="animate-spin" />
               </div>
             ) : (
               <div className="flex justify-center">
-                <DialogSwapProgress factoryAddress={swapFactoryContract?.address} amount={fromAmount} />
+                <DialogSwapProgress
+                  address={address}
+                  factoryAddress={swapFactoryContract?.address}
+                  tokenAddress={fromToken}
+                  amount={fromAmount}
+                />
               </div>
             )}
           </CardContent>

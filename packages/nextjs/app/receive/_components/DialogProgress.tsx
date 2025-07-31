@@ -1,7 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
-import { keccak256, parseUnits, toBytes } from "viem";
+import React, { useEffect, useState } from "react";
+import { formatUnits, keccak256, parseUnits, toBytes } from "viem";
+import { useWalletClient } from "wagmi";
 import { Button } from "~~/components/shadcn/ui/button";
 import {
   Dialog,
@@ -12,14 +13,19 @@ import {
   DialogTrigger,
 } from "~~/components/shadcn/ui/dialog";
 import { Progress } from "~~/components/shadcn/ui/progress";
+import { useScaffoldReadContract } from "~~/hooks/scaffold-eth/useScaffoldReadContract";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth/useScaffoldWriteContract";
 
 type DialogSwapProgressProps = {
+  address: string;
   factoryAddress: `0x${string}` | undefined;
+  tokenAddress: string;
   amount: string;
 };
 
-const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({ factoryAddress, amount }) => {
+const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({ address, factoryAddress, tokenAddress, amount }) => {
+  const { data: walletClient } = useWalletClient();
+
   //states
   const [currentProgress, setCurrentProgress] = useState<number>(0);
 
@@ -28,6 +34,12 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({ factoryAddress,
 
   const { writeContractAsync: writeSwapFactoryAsync } = useScaffoldWriteContract({ contractName: "SwapFactory" });
 
+  const { data: allowance } = useScaffoldReadContract({
+    contractName: "USDC_Testnet",
+    functionName: "allowance",
+    args: [address, factoryAddress],
+  });
+
   //functions
   const handleApprove = async () => {
     try {
@@ -35,8 +47,6 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({ factoryAddress,
         functionName: "approve",
         args: [factoryAddress, parseUnits(amount, 6)],
       });
-
-      setCurrentProgress(30);
     } catch (e) {
       console.error("Error setting greeting:", e);
     }
@@ -48,17 +58,16 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({ factoryAddress,
 
   //TODO: luego de crear el swap empeza a averigurar la forma de yo tener esa address porque creo que la vamos a necesitar para interactuar con el y 1nch
 
+  const hashlock = keccak256(toBytes("key-secret"));
   const handleCreateSwap = async () => {
     try {
-      const hashlock = keccak256(toBytes("key-secret"));
-
       await writeSwapFactoryAsync({
         functionName: "createSwap",
         args: [
           hashlock, // Hash del secreto
           3600n, // 1 hora
-          "0xReceiverAddress...", // Destinatario
-          "0xTokenAddress...", // Contrato del token
+          address, // Destinatario
+          tokenAddress, // Contrato del token
           parseUnits(amount, 6),
         ],
       });
@@ -68,6 +77,59 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({ factoryAddress,
       console.error("Error setting greeting:", e);
     }
   };
+
+  const handleSign = async () => {
+    const intent = {
+      chainFrom: "Etherlink",
+      chainTo: "Etherlink",
+      tokenFrom: tokenAddress,
+      tokenTo: tokenAddress,
+      amount: BigInt("1000000000000000000"), // 1 token con 18 decimales
+      recipient: address,
+      executorContract: "0x222",
+      hashlock,
+      timelock: Math.floor(Date.now() / 1000) + 3600, // Expira en 1 hora
+      minReceived: BigInt("950000000000000000"), // Mínimo aceptado en la otra cadena
+    };
+
+    const domain = {
+      name: "FusionSwapIntent",
+      version: "1",
+      chainId: 128123, // Etherlink chainId
+      verifyingContract: "0xTuFactoryAddress",
+    };
+
+    const types = {
+      Intent: [
+        { name: "chainFrom", type: "string" },
+        { name: "chainTo", type: "string" },
+        { name: "tokenFrom", type: "address" },
+        { name: "tokenTo", type: "address" },
+        { name: "amount", type: "uint256" },
+        { name: "recipient", type: "address" },
+        { name: "executorContract", type: "address" },
+        { name: "hashlock", type: "bytes32" },
+        { name: "timelock", type: "uint256" },
+        { name: "minReceived", type: "uint256" },
+      ],
+    };
+
+    //hacer una firma La firma EIP-712 garantiza que el Intent fue autorizado por el usuario.
+
+    const signature = await walletClient?.signTypedData({
+      domain,
+      types,
+      primaryType: "Intent",
+      message: intent,
+    });
+
+    console.log(signature);
+  };
+
+  useEffect(() => {
+    if (allowance !== undefined && allowance > 0) setCurrentProgress(60);
+    else setCurrentProgress(0);
+  }, [allowance]);
 
   return (
     <Dialog>
@@ -94,7 +156,11 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({ factoryAddress,
           ) : currentProgress < 60 ? (
             <Button onClick={handleCreateSwap}>Create Swap</Button>
           ) : (
-            <div></div>
+            <article>
+              <p>{formatUnits(allowance ?? 0n, 6)}</p>
+
+              <Button onClick={handleSign}>Sign</Button>
+            </article>
           )}
         </section>
       </DialogContent>

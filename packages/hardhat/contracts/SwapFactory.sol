@@ -9,16 +9,17 @@ import "./FusionSwapIntentERC20.sol";
 ///         y centraliza el depósito inicial de tokens del usuario.
 contract SwapFactory {
     //states
-    address[] public allSwaps;
+    mapping(address => address) swaps;
+    uint256 public swapCounter;
 
     //events
     event SwapCreated(
-        address swapAddress,     
-        address indexed creator, 
-        address indexed receiver, 
-        address indexed token,    // La dirección del token ERC-20
-        uint256 amount,     
-        uint256 timelockEnd       // El timestamp Unix de finalización del timelock
+        address swapAddress,
+        address indexed creator,
+        address indexed receiver,
+        address indexed token, // La dirección del token ERC-20
+        uint256 amount,
+        uint256 timelockEnd // El timestamp Unix de finalización del timelock
     );
 
     /// @notice Crea una nueva instancia del contrato FusionSwapIntentERC20.
@@ -43,11 +44,12 @@ contract SwapFactory {
         require(timelockSeconds > 0, "Timelock must be positive.");
 
         IERC20 tokenInstance = IERC20(tokenAddress);
+        address user = msg.sender;
 
         // Paso 1: Mover los tokens del USUARIO (msg.sender) a la Factory.
         // El usuario debe haber llamado a token.approve(address(this), amount) ANTES de llamar a esta función.
         require(
-            tokenInstance.transferFrom(msg.sender, address(this), amount),
+            tokenInstance.transferFrom(user, address(this), amount),
             "Token transfer from user to factory failed. Check allowance."
         );
 
@@ -55,7 +57,7 @@ contract SwapFactory {
         // Pasamos msg.sender como el '_sender' original para el FusionSwapIntentERC20
         // para que ese contrato sepa quién tiene los derechos de reembolso.
         FusionSwapIntentERC20 newSwap = new FusionSwapIntentERC20(
-            msg.sender,         
+            user,
             hashlock,
             timelockSeconds,
             receiver,
@@ -71,7 +73,9 @@ contract SwapFactory {
         );
 
         // Almacenar la dirección del nuevo contrato de swap
-        allSwaps.push(address(newSwap));
+        // allSwaps.push(address(newSwap));
+        swaps[user] = address(newSwap);
+        swapCounter++;
 
         emit SwapCreated(
             address(newSwap),
@@ -83,16 +87,7 @@ contract SwapFactory {
         );
     }
 
-    function getSwapCount() external view returns (uint256) {
-        return allSwaps.length;
-    }
-
-    function getSwapAddress(uint256 index) external view returns (address) {
-        require(index < allSwaps.length, "Invalid index.");
-        return allSwaps[index];
-    }
-
-    function getAllSwaps() external view returns (address[] memory) {
-        return allSwaps;
+    function getSwapAddress() external view returns (address) {
+        return swaps[msg.sender];
     }
 }
