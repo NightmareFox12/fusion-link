@@ -9,8 +9,10 @@ import "./FusionSwapIntentERC20.sol";
 ///         y centraliza el depósito inicial de tokens del usuario.
 contract SwapFactory {
     //states
-    mapping(address => address) swaps;
+    mapping(address => address) public swaps;
     uint256 public swapCounter;
+    string name = "FusionSwapIntentERC20";
+    string version = "1";
 
     //events
     event SwapCreated(
@@ -19,7 +21,7 @@ contract SwapFactory {
         address indexed receiver,
         address indexed token, // La dirección del token ERC-20
         uint256 amount,
-        uint256 timelockEnd // El timestamp Unix de finalización del timelock
+        uint256 timelockEnd
     );
 
     /// @notice Crea una nueva instancia del contrato FusionSwapIntentERC20.
@@ -37,7 +39,6 @@ contract SwapFactory {
         address tokenAddress,
         uint256 amount
     ) external {
-        // Validaciones iniciales
         require(amount > 0, "Amount must be greater than zero.");
         require(receiver != address(0), "Receiver address required.");
         require(tokenAddress != address(0), "Token address required.");
@@ -56,7 +57,10 @@ contract SwapFactory {
         // Paso 2: Crear la nueva instancia del contrato FusionSwapIntentERC20.
         // Pasamos msg.sender como el '_sender' original para el FusionSwapIntentERC20
         // para que ese contrato sepa quién tiene los derechos de reembolso.
+
         FusionSwapIntentERC20 newSwap = new FusionSwapIntentERC20(
+            name,
+            version,
             user,
             hashlock,
             timelockSeconds,
@@ -85,9 +89,5 @@ contract SwapFactory {
             amount,
             block.timestamp + timelockSeconds
         );
-    }
-
-    function getSwapAddress() external view returns (address) {
-        return swaps[msg.sender];
     }
 }

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { formatUnits, keccak256, parseUnits, toBytes } from "viem";
-import { useWalletClient } from "wagmi";
+import { useSignTypedData } from "wagmi";
 import { Button } from "~~/components/shadcn/ui/button";
 import {
   Dialog,
@@ -19,12 +19,19 @@ import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth/useScaffoldWrite
 type DialogSwapProgressProps = {
   address: string;
   factoryAddress: `0x${string}` | undefined;
-  tokenAddress: string;
-  amount: string;
+  fromTokenAddress: string;
+  fromAmount: string;
+  decimal: 6 | 18;
 };
 
-const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({ address, factoryAddress, tokenAddress, amount }) => {
-  const { data: walletClient } = useWalletClient();
+const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
+  address,
+  factoryAddress,
+  fromTokenAddress,
+  fromAmount,
+  decimal,
+}) => {
+  const { signTypedDataAsync } = useSignTypedData();
 
   //states
   const [currentProgress, setCurrentProgress] = useState<number>(0);
@@ -40,13 +47,21 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({ address, factor
     args: [address, factoryAddress],
   });
 
+  const { data: swapAddress } = useScaffoldReadContract({
+    contractName: "SwapFactory",
+    functionName: "swaps",
+    args: [address],
+  });
+
   //functions
   const handleApprove = async () => {
     try {
       await writeTokenAsync({
         functionName: "approve",
-        args: [factoryAddress, parseUnits(amount, 6)],
+        args: [factoryAddress, parseUnits(fromAmount, 6)],
       });
+
+      setCurrentProgress(33.3);
     } catch (e) {
       console.error("Error setting greeting:", e);
     }
@@ -67,74 +82,107 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({ address, factor
           hashlock, // Hash del secreto
           3600n, // 1 hora
           address, // Destinatario
-          tokenAddress, // Contrato del token
-          parseUnits(amount, 6),
+          fromTokenAddress, // Contrato del token
+          parseUnits(fromAmount, decimal),
         ],
       });
 
-      setCurrentProgress(60);
+      setCurrentProgress(66.6);
     } catch (e) {
       console.error("Error setting greeting:", e);
     }
   };
+  console.log(fromAmount);
+  console.log(parseUnits(fromAmount, decimal));
 
   const handleSign = async () => {
-    const intent = {
-      chainFrom: "Etherlink",
-      chainTo: "Etherlink",
-      tokenFrom: tokenAddress,
-      tokenTo: tokenAddress,
-      amount: BigInt("1000000000000000000"), // 1 token con 18 decimales
-      recipient: address,
-      executorContract: "0x222",
-      hashlock,
-      timelock: Math.floor(Date.now() / 1000) + 3600, // Expira en 1 hora
-      minReceived: BigInt("950000000000000000"), // Mínimo aceptado en la otra cadena
-    };
-
-    const domain = {
-      name: "FusionSwapIntent",
-      version: "1",
-      chainId: 128123, // Etherlink chainId
-      verifyingContract: "0xTuFactoryAddress",
-    };
-
-    const types = {
-      Intent: [
-        { name: "chainFrom", type: "string" },
-        { name: "chainTo", type: "string" },
-        { name: "tokenFrom", type: "address" },
-        { name: "tokenTo", type: "address" },
-        { name: "amount", type: "uint256" },
-        { name: "recipient", type: "address" },
-        { name: "executorContract", type: "address" },
-        { name: "hashlock", type: "bytes32" },
-        { name: "timelock", type: "uint256" },
-        { name: "minReceived", type: "uint256" },
-      ],
-    };
-
-    //hacer una firma La firma EIP-712 garantiza que el Intent fue autorizado por el usuario.
-
-    const signature = await walletClient?.signTypedData({
-      domain,
-      types,
-      primaryType: "Intent",
-      message: intent,
+    const amount = parseUnits(fromAmount, decimal);
+    const signature = await signTypedDataAsync({
+      domain: {
+        name: "FusionSwapIntentERC20",
+        version: "1",
+        chainId: 128123,
+        verifyingContract: swapAddress,
+      },
+      types: {
+        SwapIntent: [
+          { name: "sender", type: "address" },
+          { name: "receiver", type: "address" },
+          { name: "fromChainId", type: "uint256" },
+          { name: "toChainId", type: "uint256" },
+          { name: "fromToken", type: "address" },
+          { name: "toToken", type: "address" },
+          { name: "amount", type: "uint256" },
+          { name: "hashlock", type: "bytes32" },
+          { name: "timelock", type: "uint256" },
+        ],
+      },
+      primaryType: "SwapIntent",
+      message: {
+        sender: address,
+        receiver: address,
+        fromChainId: 128123n,
+        toChainId: 10n,
+        fromToken: fromTokenAddress,
+        toToken: fromTokenAddress,
+        amount,
+        hashlock,
+        timelock: BigInt(Math.floor(Date.now() / 1000)) + 3600n, //1 hour,
+      },
     });
 
     console.log(signature);
+    await sendSign(signature, fromTokenAddress, fromTokenAddress, address, address, amount, amount, 128123n.toString());
+    setCurrentProgress(99.9);
   };
 
-  useEffect(() => {
-    if (allowance !== undefined && allowance > 0) setCurrentProgress(60);
-    else setCurrentProgress(0);
-  }, [allowance]);
+  const sendSign = async (
+    signature: string,
+    fromTokenAddress: string,
+    toTokenAdress: string,
+    fromAddress: string,
+    toAddress: string,
+    fromAmount: bigint,
+    toAmount: bigint,
+    srcChainId: string,
+  ) => {
+    try {
+      const req = await fetch("api/look", {
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+        body: JSON.stringify({
+          signature,
+          fromTokenAddress,
+          toTokenAdress,
+          fromAddress,
+          toAddress,
+          fromAmount: fromAmount.toString(),
+          toAmount: toAmount.toString(),
+          srcChainId,
+        }),
+      });
+
+      const res = await req.json();
+
+      console.log(res);
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  // useEffect(() => {
+  //   if (swapAddress !== undefined && !swapAddress.includes("0x0000000000000")) setCurrentProgress(66.6);
+  //   else if (allowance !== undefined && allowance > 0) setCurrentProgress(33.3);
+  //   else setCurrentProgress(0);
+  // }, [allowance, swapAddress]);
+  // console.log(currentProgress);
 
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="bg-gradient w-full" disabled={parseInt(amount) < 0}>
+        <Button className="bg-gradient w-full" disabled={parseFloat(fromAmount) < 0}>
           Next
         </Button>
       </DialogTrigger>
@@ -146,14 +194,12 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({ address, factor
             servers.
           </DialogDescription>
         </DialogHeader>
-
         <section>
           <span>Progress</span>
           <Progress value={currentProgress} />
-
           {currentProgress < 30 ? (
             <Button onClick={handleApprove}>Aprove amount</Button>
-          ) : currentProgress < 60 ? (
+          ) : currentProgress <= 60 ? (
             <Button onClick={handleCreateSwap}>Create Swap</Button>
           ) : (
             <article>

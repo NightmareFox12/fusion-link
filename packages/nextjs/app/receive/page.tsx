@@ -24,11 +24,17 @@ const networks = [
 ] as const;
 
 const tokens = [
-  { value: "eth", label: "Ether", symbol: "ETH", icon: "eth" },
-  { value: "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4", label: "USDC", symbol: "USDC", icon: "usdc" },
-  { value: "0x68f180fcce6836688e9084f035309e29bf0a2095", label: "Tether", symbol: "USDT", icon: "usdt" },
-  { value: "0xeeeeeb57642040be42185f49c52f7e9b38f8eeee", label: "Optimism", symbol: "OP", icon: "op" },
-  { value: "0x4C2AA252BEe766D3399850569713b55178934849", label: "USDC Testnet", symbol: "USDC", icon: "bnb" },
+  { value: "eth", label: "Ether", symbol: "ETH", icon: "eth", decimal: 18 },
+  { value: "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4", label: "USDC", symbol: "USDC", icon: "usdc", decimal: 18 },
+  { value: "0x68f180fcce6836688e9084f035309e29bf0a2095", label: "Tether", symbol: "USDT", icon: "usdt", decimal: 18 },
+  { value: "0xeeeeeb57642040be42185f49c52f7e9b38f8eeee", label: "Optimism", symbol: "OP", icon: "op", decimal: 18 },
+  {
+    value: "0x4C2AA252BEe766D3399850569713b55178934849",
+    label: "USDC Testnet",
+    symbol: "USDC",
+    icon: "bnb",
+    decimal: 6,
+  },
 ] as const;
 
 // [Usuario inicia swap de USDC en Etherlink]
@@ -388,7 +394,7 @@ const ReceivePage: NextPage = () => {
             >
               Generate order
             </Button> */}
-            {isLoading || address === undefined ? (
+            {isLoading || address === undefined || tokenSelected === undefined ? (
               <div className="flex justify-center">
                 <Loader className="animate-spin" />
               </div>
@@ -397,8 +403,9 @@ const ReceivePage: NextPage = () => {
                 <DialogSwapProgress
                   address={address}
                   factoryAddress={swapFactoryContract?.address}
-                  tokenAddress={fromToken}
-                  amount={fromAmount}
+                  fromTokenAddress={fromToken}
+                  fromAmount={fromAmount}
+                  decimal={tokenSelected.decimal}
                 />
               </div>
             )}

@@ -2,19 +2,26 @@
 pragma solidity ^0.8.30;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
+import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /// @title Cross-Chain Atomic Swap Intent ERC20 (Fusion+ Compatible)
 /// @notice Contrato para swaps atómicos con hashlock y timelock que
 ///         puede usarse en flujos cross-chain con relayers como Fusion+.
-contract FusionSwapIntentERC20 {
+contract FusionSwapIntentERC20 is EIP712 {
     address public sender; // Quien crea el swap (y puede pedir reembolso)
     address public receiver; // Quien recibe los fondos si revela el secreto
     bytes32 public hashlock; // keccak256(secreto)
-    uint256 public timelock; // Expiración Unix timestamp
-    uint256 public amount; // Tokens bloqueados
+    uint256 public timelock;
+    uint256 public amount;
     IERC20 public token; // Token ERC-20
     bool public withdrawn; // Swap ejecutado con éxito
-    bool public refunded; // Reembolso ejecutado
+    bool public refunded;
+
+    bytes32 private constant SWAP_INTENT_TYPEHASH =
+        keccak256(
+            "SwapIntent(address sender,address receiver,uint256 fromChainId,uint256 toChainId,address fromToken,address toToken,uint256 amount,bytes32 hashlock,uint256 timelock)"
+        );
 
     event SwapIntentCreated(
         address indexed sender,
@@ -30,13 +37,15 @@ contract FusionSwapIntentERC20 {
     event SwapRefunded();
 
     constructor(
+        string memory name,
+        string memory version,
         address _sender,
         bytes32 _hashlock,
         uint256 _timelockSeconds,
         address _receiver,
         address _token,
         uint256 _amount
-    ) {
+    ) EIP712(name, version) {
         require(_sender != address(0), "Invalid sender");
         require(_receiver != address(0), "Invalid receiver");
         require(_token != address(0), "Invalid token");
@@ -60,12 +69,70 @@ contract FusionSwapIntentERC20 {
         emit SecretRevealed(_secret);
     }
 
+    function verifySignature(
+        address _sender,
+        address _receiver,
+        uint256 _fromChainId,
+        uint256 _toChainId,
+        address _fromToken,
+        address _toToken,
+        uint256 _amount,
+        bytes32 _hashlock,
+        uint256 _timelock,
+        bytes memory signature
+    ) internal view returns (bool) {
+        // 1. Calcula el hash de la estructura del mensaje firmado por el usuario.
+        bytes32 structHash = keccak256(
+            abi.encode(
+                SWAP_INTENT_TYPEHASH,
+                _sender,
+                _receiver,
+                _fromChainId,
+                _toChainId,
+                _fromToken,
+                _toToken,
+                _amount,
+                _hashlock,
+                _timelock
+            )
+        );
+
+        return SignatureChecker.isValidSignatureNow(_sender, _hashTypedDataV4(structHash), signature);
+    }
+
     /// @notice Ejecuta el swap si se conoce el secreto.
     /// @dev Abierto para cualquier executor que tenga el preimagen válida.
-    function executeSwap(bytes32 _secret) external {
+    function executeSwap(
+        bytes32 _secret,
+        uint256 fromChainId,
+        uint256 toChainId,
+        address fromToken,
+        address toToken,
+        bytes memory signature
+    ) external {
+        bytes32 structHash = _hashTypedDataV4(
+            keccak256(
+                abi.encode(
+                    SWAP_INTENT_TYPEHASH,
+                    sender,
+                    receiver,
+                    fromChainId,
+                    toChainId,
+                    fromToken,
+                    toToken,
+                    amount,
+                    hashlock,
+                    timelock
+                )
+            )
+        );
+
+        require(SignatureChecker.isValidSignatureNow(sender, structHash, signature), "Invalid signature");
+
         require(!withdrawn, "Already executed");
         require(!refunded, "Already refunded");
         require(keccak256(abi.encodePacked(_secret)) == hashlock, "Invalid secret");
+        require(block.timestamp <= timelock, "Timelock has expired"); // Usa el timelock del constructor
 
         withdrawn = true;
         require(token.transfer(receiver, amount), "Token transfer failed");
@@ -91,4 +158,3 @@ contract FusionSwapIntentERC20 {
         return "Pending";
     }
 }
-
