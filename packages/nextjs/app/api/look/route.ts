@@ -15,18 +15,20 @@ export async function POST(request: Request) {
 
   const payload = {
     order: {
-      salt: "42",
+      salt: BigInt(Date.now()).toString(),
       makerAsset: fromTokenAddress,
       takerAsset: toTokenAddress,
       maker: fromAddress,
       receiver: toAddress,
       makingAmount: fromAmount,
       takingAmount: toAmount,
-      makerTraits: "0",
+      makerTraits: "0x" + BigInt(0).toString(16).padStart(64, "0"),
     },
-    srcChainId: JSON.parse(srcChainId),
+    srcChainId: srcChainId,
     signature,
-    extension: "0x0",
+    extension: "0x" + "00".repeat(32),
+    postInteraction:
+      "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000001",
     quoteId: "2",
     secretHashes: [hashlock],
   };
