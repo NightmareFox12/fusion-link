@@ -139,7 +139,7 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
   const sendSign = async (
     signature: string,
     fromTokenAddress: string,
-    toTokenAdress: string,
+    toTokenAddress: string,
     fromAddress: string,
     toAddress: string,
     fromAmount: bigint,
@@ -153,9 +153,10 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
           "Content-type": "application/json",
         },
         body: JSON.stringify({
+          hashlock,
           signature,
           fromTokenAddress,
-          toTokenAdress,
+          toTokenAddress,
           fromAddress,
           toAddress,
           fromAmount: fromAmount.toString(),
