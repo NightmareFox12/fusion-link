@@ -17,22 +17,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~
 import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
 
 const networks = [
-  { label: "Ethereum", chainId: 1, icon: "ethereum" },
-  { label: "Optimism", chainId: 10, icon: "optimism" },
-  { label: "Arbitrum", chainId: 42161, icon: "arbitrum-one" },
-  { label: "Etherlink", chainId: 42793, icon: "etherlink" },
+  // { label: "Ethereum", chainId: 1, icon: "ethereum" },
+  { label: "Optimism Testnet", chainId: 11155420, icon: "optimism" },
+  // { label: "Arbitrum", chainId: 42161, icon: "arbitrum-one" },
+  { label: "Etherlink Testnet", chainId: 42793, icon: "etherlink" },
 ] as const;
 
 const tokens = [
   { value: "eth", label: "Ether", symbol: "ETH", icon: "eth", decimal: 18 },
-  { value: "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4", label: "USDC", symbol: "USDC", icon: "usdc", decimal: 18 },
-  { value: "0x68f180fcce6836688e9084f035309e29bf0a2095", label: "Tether", symbol: "USDT", icon: "usdt", decimal: 18 },
-  { value: "0xeeeeeb57642040be42185f49c52f7e9b38f8eeee", label: "Optimism", symbol: "OP", icon: "op", decimal: 18 },
+  // { value: "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4", label: "USDC", symbol: "USDC", icon: "usdc", decimal: 18 },
+  // { value: "0x68f180fcce6836688e9084f035309e29bf0a2095", label: "Tether", symbol: "USDT", icon: "usdt", decimal: 18 },
+  // { value: "0xeeeeeb57642040be42185f49c52f7e9b38f8eeee", label: "Optimism", symbol: "OP", icon: "op", decimal: 18 },
   {
     value: "0x4C2AA252BEe766D3399850569713b55178934849",
     label: "USDC Testnet",
     symbol: "USDC",
-    icon: "bnb",
+    icon: "usdc",
     decimal: 6,
   },
 ] as const;
@@ -68,120 +68,12 @@ const ReceivePage: NextPage = () => {
   //smart contract
   const { data: swapFactoryContract, isLoading } = useDeployedContractInfo({ contractName: "SwapFactory" });
 
-  //functions
-  // const handleSubmit = async () => {
-  //   if (fromNetwork === "" || toNetwork === "") return;
-
-  //   // Convertir el secreto a bytes
-  //   const secret = "my-super-secret-key"; // puede ser un string, un número, un hex...
-  //   const secretBytes = toBytes(secret);
-  //   const hashlock = keccak256(secretBytes);
-
-  //   try {
-  //     await writeSwapFactoryAsync({
-  //       functionName: "createSwap",
-  //       args: [
-  //         hashlock, // Hash del secreto
-  //         3600, // 1 hora
-  //         "0xReceiverAddress...", // Destinatario
-  //         "0xExecutorAddress...", // Ejecutor
-  //         "0xTokenAddress...", // Contrato del token
-  //         formatEther(100000000000000n), // Monto en tokens
-  //       ],
-  //     });
-
-  //     // setReceiveAddress(""); //TODO: esto no va aqui
-  //     //TODO: crear el smart contract para guardar las preferencias incluyendo un state private para el email
-  //     //TODO: crear otra function para que el usuario pueda editar su preferencias al recibir el dinero
-
-  //     //TODO: debo ver como crear el codigo QR y empezar a ahacer lo del send
-  //   } catch (err) {
-  //     console.log(err);
-  //   } finally {
-  //   }
-  // };
-
-  // const generateReceiveAddress = () => {
-  //   if (!selectedToken || !selectedNetwork) {
-  //     // toast({
-  //     //   title: "Campos requeridos",
-  //     //   description: "Por favor selecciona un token y una red de destino",
-  //     //   variant: "destructive",
-  //     // });
-  //     return;
-  //   }
-
-  //   // Simular generación de dirección
-  //   const mockAddress = "0x" + Math.random().toString(16).substr(2, 40);
-  //   setReceiveAddress(mockAddress);
-
-  //   // toast({
-  //   //   title: "Dirección generada",
-  //   //   description: "Tu dirección de recepción ha sido generada exitosamente",
-  //   // });
-  // };
-
-  // const copyAddress = () => {
-  //   if (receiveAddress) {
-  //     navigator.clipboard.writeText(receiveAddress);
-  //     // toast({
-  //     //   title: "Copiado",
-  //     //   description: "Dirección copiada al portapapeles",
-  //     // });
-  //   }
-  // };
-
-  // const PayloadQR = () => {
-  //   const canvasRef = useRef(null);
-
-  //   useEffect(() => {
-  //     const drawQR = async () => {
-  //       if (canvasRef.current) {
-  //         try {
-  //           const payloadString = JSON.stringify({ cat: true });
-  //           await QRcode.toCanvas(canvasRef.current, payloadString, {
-  //             width: 200,
-  //             margin: 2,
-  //           });
-  //         } catch (err) {
-  //           console.error("Error al generar el QR:", err);
-  //         }
-  //       }
-  //     };
-
-  //     drawQR();
-  //   }, []);
-
-  //   return (
-  //     <div>
-  //       <canvas ref={canvasRef} />
-  //     </div>
-  //   );
-  // };
-
   //effects
   useEffect(() => {
     window.addEventListener("resize", () => {
       setShowLongAddress(window.innerWidth > 600);
     });
-
-    // const getBalance = async () => {
-    //   try {
-    //     const req = await fetch("api/balance");
-    //     const res = await req.json();
-
-    //     // setUserBalance(formatEther(res["0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"]));
-    //     setUserBalance(formatEther(res["0x4200000000000000000000000000000000000006"]));
-    //   } catch (err) {
-    //     console.log(err);
-    //   }
-    // };
-
-    // getBalance();
   }, []);
-
-  // const selectedTokenData = tokens.find(t => t.value === selectedToken);
-  // const selectedNetworkData = networks.find(n => n.chainId.toString() === selectedNetwork);
 
   //memos
   const tokenSelected = useMemo(() => {
@@ -211,7 +103,7 @@ const ReceivePage: NextPage = () => {
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {/* Balance session  */}
+            {/* Balance session */}
             {/* {isLoading || balance === undefined ? (
               <div className="w-full flex justify-center gap-2">
                 <Loader className="animate-spin" />
@@ -235,26 +127,19 @@ const ReceivePage: NextPage = () => {
                     <SelectValue placeholder="Select a network" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* {networks.map(network => (
-                    <SelectItem key={network.chainId} value={network.chainId.toString()} className="cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <NetworkIcon id={network.icon} variant="branded" />
-                        <span>{network.label}</span>
-                        <Badge variant="outline">Chain {network.chainId}</Badge>
-                      </div>
-                    </SelectItem>
-                  ))} */}
-                    <SelectItem
-                      key={networks[3].chainId}
-                      value={networks[3].chainId.toString()}
-                      className="cursor-pointer p-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <NetworkIcon id={networks[3].icon} variant="branded" className="size-8" />
-                        <span className="">{networks[3].label}</span>
-                        <Badge variant="outline">Chain {networks[3].chainId}</Badge>
-                      </div>
-                    </SelectItem>
+                    {networks.map(network => (
+                      <SelectItem
+                        key={network.chainId}
+                        value={network.chainId.toString()}
+                        className="cursor-pointer p-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <NetworkIcon id={network.icon} variant="branded" className="size-8" />
+                          <span className="">{network.label}</span>
+                          <Badge variant="outline">Chain {network.chainId}</Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -325,26 +210,19 @@ const ReceivePage: NextPage = () => {
                     <SelectValue placeholder="Select a network" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* {networks.map(network => (
-                    <SelectItem key={network.chainId} value={network.chainId.toString()} className="cursor-pointer">
-                      <div className="flex items-center gap-2">
-                        <NetworkIcon id={network.icon} variant="branded" />
-                        <span>{network.label}</span>
-                        <Badge variant="outline">Chain {network.chainId}</Badge>
-                      </div>
-                    </SelectItem>
-                  ))} */}
-                    <SelectItem
-                      key={networks[3].chainId}
-                      value={networks[3].chainId.toString()}
-                      className="cursor-pointer p-2"
-                    >
-                      <div className="flex items-center gap-2">
-                        <NetworkIcon id={networks[3].icon} variant="branded" className="size-8" />
-                        <span className="">{networks[3].label}</span>
-                        <Badge variant="outline">Chain {networks[3].chainId}</Badge>
-                      </div>
-                    </SelectItem>
+                    {networks.map(network => (
+                      <SelectItem
+                        key={network.chainId}
+                        value={network.chainId.toString()}
+                        className="cursor-pointer p-2"
+                      >
+                        <div className="flex items-center gap-2">
+                          <NetworkIcon id={network.icon} variant="branded" className="size-8" />
+                          <span className="">{network.label}</span>
+                          <Badge variant="outline">Chain {network.chainId}</Badge>
+                        </div>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -417,78 +295,3 @@ const ReceivePage: NextPage = () => {
 };
 
 export default ReceivePage;
-
-{
-  /* {receiveAddress && (
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-green-800">
-                <QrCode className="h-5 w-5" />
-                Dirección de Recepción
-              </CardTitle>
-              <CardDescription className="text-green-700">Envía tus criptomonedas a esta dirección</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              Selected Configuration 
-              <div className="flex flex-wrap gap-2">
-                {selectedTokenData && (
-                  <Badge variant="default" className="bg-blue-100 text-blue-800">
-                    {selectedTokenData.icon} {selectedTokenData.symbol}
-                  </Badge>
-                )}
-                {selectedNetworkData && (
-                  <Badge variant="default" className="bg-purple-100 text-purple-800">
-                    {selectedNetwork} {selectedNetworkData.chainId}
-                  </Badge>
-                )}
-                {amount && (
-                  <Badge variant="outline">
-                    {amount} {selectedTokenData?.symbol}
-                  </Badge>
-                )} 
-              </div>
-
-              <Separator />
-
-              Address 
-              <div className="space-y-2">
-                <Label>Dirección de Recepción</Label>
-                <div className="flex gap-2">
-                  <Input value={receiveAddress} readOnly className="font-mono text-sm bg-white" />
-                  <Button variant="outline" size="icon" onClick={copyAddress}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              QR Code Placeholder 
-              <div className="flex justify-center">
-                <div className="w-48 h-48 bg-white border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center">
-                  <div className="text-center text-gray-500">
-                    <QrCode className="h-12 w-12 mx-auto mb-2" />
-                    <p className="text-sm">Código QR</p>
-                    <p className="text-xs">{"(Próximamente)"}</p>
-                  </div>
-                </div>
-              </div>
-
-              Warning 
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <div className="flex items-start gap-2">
-                  <div className="text-yellow-600 mt-0.5">⚠️</div>
-                  <div className="text-sm text-yellow-800">
-                    <p className="font-medium mb-1">Importante:</p>
-                    <ul className="space-y-1 text-xs">
-                      <li>
-                        • Solo envía {selectedTokenData?.icon} en la red {selectedNetworkData?.label}
-                      </li>
-                      <li>• Verifica la dirección antes de enviar</li>
-                      <li>• Las transacciones son irreversibles</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )} */
-}

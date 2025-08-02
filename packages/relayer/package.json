@@ -1,0 +1,7 @@
+{
+  "name": "relayer",
+  "packageManager": "yarn@3.2.3",
+  "dependencies": {
+    "viem": "^2.33.2"
+  }
+}

@@ -9,13 +9,13 @@ import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 /// @notice Contrato para swaps atómicos con hashlock y timelock que
 ///         puede usarse en flujos cross-chain con relayers como Fusion+.
 contract FusionSwapIntentERC20 is EIP712 {
-    address public sender; // Quien crea el swap (y puede pedir reembolso)
-    address public receiver; // Quien recibe los fondos si revela el secreto
-    bytes32 public hashlock; // keccak256(secreto)
+    address public sender;
+    address public receiver;
+    bytes32 public hashlock;
     uint256 public timelock;
     uint256 public amount;
-    IERC20 public token; // Token ERC-20
-    bool public withdrawn; // Swap ejecutado con éxito
+    IERC20 public token;
+    bool public withdrawn; 
     bool public refunded;
 
     bytes32 private constant SWAP_INTENT_TYPEHASH =
@@ -81,7 +81,6 @@ contract FusionSwapIntentERC20 is EIP712 {
         uint256 _timelock,
         bytes memory signature
     ) internal view returns (bool) {
-        // 1. Calcula el hash de la estructura del mensaje firmado por el usuario.
         bytes32 structHash = keccak256(
             abi.encode(
                 SWAP_INTENT_TYPEHASH,
@@ -132,14 +131,12 @@ contract FusionSwapIntentERC20 is EIP712 {
         require(!withdrawn, "Already executed");
         require(!refunded, "Already refunded");
         require(keccak256(abi.encodePacked(_secret)) == hashlock, "Invalid secret");
-        require(block.timestamp <= timelock, "Timelock has expired"); // Usa el timelock del constructor
-
+        require(block.timestamp <= timelock, "Timelock has expired");
         withdrawn = true;
         require(token.transfer(receiver, amount), "Token transfer failed");
         emit SwapExecuted(msg.sender, _secret);
     }
 
-    /// @notice Permite al sender reembolsar si nadie reveló el secreto antes del timelock.
     function refundSwap() external {
         require(block.timestamp > timelock, "Timelock not expired");
         require(msg.sender == sender, "Only sender can refund");
@@ -151,7 +148,6 @@ contract FusionSwapIntentERC20 is EIP712 {
         emit SwapRefunded();
     }
 
-    /// @return Estado actual como texto
     function getSwapStatus() external view returns (string memory) {
         if (withdrawn) return "Completed";
         if (refunded) return "Refunded";
