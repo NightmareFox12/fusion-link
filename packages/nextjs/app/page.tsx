@@ -46,18 +46,18 @@ const ReceivePage: NextPage = () => {
 
   //effects
   useEffect(() => {
+    window.addEventListener("resize", () => {
+      setShowLongAddress(window.innerWidth > 600);
+    });
+  }, []);
+
+  useEffect(() => {
     setFromTokensArr(tokensByChain(parseInt(fromNetwork ?? 0)));
   }, [fromNetwork]);
 
   useEffect(() => {
     setToTokensArr(tokensByChain(parseInt(toNetwork ?? 0)));
   }, [toNetwork]);
-
-  useEffect(() => {
-    window.addEventListener("resize", () => {
-      setShowLongAddress(window.innerWidth > 600);
-    });
-  }, []);
 
   useEffect(() => {
     if (fromNetwork && toNetwork && fromToken && toToken) {
