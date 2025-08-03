@@ -7,15 +7,16 @@ import { EIP712 } from "@openzeppelin/contracts/utils/cryptography/EIP712.sol";
 
 /// @title Cross-Chain Atomic Swap Intent ERC20 (Fusion+ Compatible)
 /// @notice Contrato para swaps atómicos con hashlock y timelock que
-///         puede usarse en flujos cross-chain con relayers como Fusion+.
+///         puede usarse en flujos cross-chain con relayers como Fusion+.
 contract FusionSwapIntentERC20 is EIP712 {
     address public sender;
     address public receiver;
     bytes32 public hashlock;
-    uint256 public timelock;
+    uint256 public timelockSeconds;
+    uint256 public timelockExpiration;
     uint256 public amount;
     IERC20 public token;
-    bool public withdrawn; 
+    bool public withdrawn;
     bool public refunded;
 
     bytes32 private constant SWAP_INTENT_TYPEHASH =
@@ -28,7 +29,7 @@ contract FusionSwapIntentERC20 is EIP712 {
         address indexed receiver,
         address indexed token,
         bytes32 hashlock,
-        uint256 timelock,
+        uint256 timelockExpiration,
         uint256 amount
     );
 
@@ -55,48 +56,19 @@ contract FusionSwapIntentERC20 is EIP712 {
         sender = _sender;
         receiver = _receiver;
         hashlock = _hashlock;
-        timelock = block.timestamp + _timelockSeconds;
+        timelockSeconds = _timelockSeconds;
+        timelockExpiration = block.timestamp + _timelockSeconds;
         token = IERC20(_token);
         amount = _amount;
 
-        emit SwapIntentCreated(_sender, _receiver, _token, _hashlock, timelock, _amount);
+        emit SwapIntentCreated(_sender, _receiver, _token, _hashlock, timelockExpiration, _amount);
     }
 
     /// @notice Publica el secreto para que solvers lo usen en otra cadena
-    ///         (ej. para completar el swap en Optimism si se reveló en Etherlink)
+    ///         (ej. para completar el swap en Optimism si se reveló en Etherlink)
     function revealSecret(bytes32 _secret) external {
         require(keccak256(abi.encodePacked(_secret)) == hashlock, "Invalid secret");
         emit SecretRevealed(_secret);
-    }
-
-    function verifySignature(
-        address _sender,
-        address _receiver,
-        uint256 _fromChainId,
-        uint256 _toChainId,
-        address _fromToken,
-        address _toToken,
-        uint256 _amount,
-        bytes32 _hashlock,
-        uint256 _timelock,
-        bytes memory signature
-    ) internal view returns (bool) {
-        bytes32 structHash = keccak256(
-            abi.encode(
-                SWAP_INTENT_TYPEHASH,
-                _sender,
-                _receiver,
-                _fromChainId,
-                _toChainId,
-                _fromToken,
-                _toToken,
-                _amount,
-                _hashlock,
-                _timelock
-            )
-        );
-
-        return SignatureChecker.isValidSignatureNow(_sender, _hashTypedDataV4(structHash), signature);
     }
 
     /// @notice Ejecuta el swap si se conoce el secreto.
@@ -121,7 +93,7 @@ contract FusionSwapIntentERC20 is EIP712 {
                     toToken,
                     amount,
                     hashlock,
-                    timelock
+                    timelockSeconds
                 )
             )
         );
@@ -131,14 +103,14 @@ contract FusionSwapIntentERC20 is EIP712 {
         require(!withdrawn, "Already executed");
         require(!refunded, "Already refunded");
         require(keccak256(abi.encodePacked(_secret)) == hashlock, "Invalid secret");
-        require(block.timestamp <= timelock, "Timelock has expired");
+        require(block.timestamp <= timelockExpiration, "Timelock has expired");
         withdrawn = true;
         require(token.transfer(receiver, amount), "Token transfer failed");
         emit SwapExecuted(msg.sender, _secret);
     }
 
     function refundSwap() external {
-        require(block.timestamp > timelock, "Timelock not expired");
+        require(block.timestamp > timelockExpiration, "Timelock not expired");
         require(msg.sender == sender, "Only sender can refund");
         require(!withdrawn, "Already executed");
         require(!refunded, "Already refunded");

@@ -77,6 +77,15 @@ const ReceivePage: NextPage = () => {
     return fromTokensArr.find(t => t.value === fromToken);
   }, [fromToken, fromTokensArr]);
 
+  //functions
+  const restarForm = () => {
+    setFromNetwork("");
+    setFromToken("");
+    setFromAmount("");
+    setToNetwork("");
+    setToToken("");
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
       <div className="max-w-2xl mx-auto space-y-6">
@@ -84,9 +93,9 @@ const ReceivePage: NextPage = () => {
         <div className="text-center space-y-1">
           <div className="flex items-center justify-center gap-2 mb-4">
             <ArrowDownUp className="h-8 w-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-neutral-content">Receive Token</h1>
+            <h1 className="text-3xl font-bold text-neutral-content">Swap Token</h1>
           </div>
-          <p className="text-neutral-content">Recibe criptomonedas de forma segura y rápida</p>
+          {/* <p className="text-neutral-content">Recibe criptomonedas de forma segura y rápida</p> */}
         </div>
 
         {/* Main Form */}
@@ -269,7 +278,7 @@ const ReceivePage: NextPage = () => {
               <div className="space-y-2">
                 <Label htmlFor="address" className="flex items-center gap-2">
                   <WalletMinimalIcon className="w-4 h-4" />
-                  Address de destino<span className="text-red-500 font-semibold">*</span>
+                  Destination Address <span className="text-red-500 font-semibold">*</span>
                 </Label>
                 <div id="address" className="w-full flex justify-center">
                   <Address address={address} format={showLongAddress ? "long" : "short"} />
@@ -292,6 +301,7 @@ const ReceivePage: NextPage = () => {
                   toNetworkId={toNetwork}
                   toTokenAddress={toToken}
                   decimal={fromTokenSelected?.decimal}
+                  restarForm={restarForm}
                 />
               </div>
             )}

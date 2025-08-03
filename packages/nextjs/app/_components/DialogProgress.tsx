@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { ArrowRight, FilePen, LockOpen, RefreshCcw } from "lucide-react";
+import { ArrowRight, Cable, FilePen, ListRestart, LockOpen, RefreshCcw } from "lucide-react";
 import { keccak256, parseUnits, toBytes } from "viem/utils";
 import { useSignTypedData } from "wagmi";
 import { Button } from "~~/components/shadcn/ui/button";
@@ -26,6 +26,7 @@ type DialogSwapProgressProps = {
   toNetworkId: string;
   toTokenAddress: string;
   decimal: 6 | 18 | undefined;
+  restarForm: () => void;
 };
 
 const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
@@ -37,27 +38,26 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
   toNetworkId,
   toTokenAddress,
   decimal,
+  restarForm,
 }) => {
   const { signTypedDataAsync } = useSignTypedData();
 
-  //states
+  // states
+  const [openDialog, setOpenDialog] = useState<boolean>(false);
+
   const [salt, setSalt] = useState<`0x${string}`>("0x");
   const [secret, setSecret] = useState<`0x${string}`>("0x");
   const [hashlock, setHashLock] = useState<`0x${string}`>("0x");
   const [currentProgress, setCurrentProgress] = useState<number>(0);
 
+  // El timelock es un valor fijo en segundos para ser consistente
+  const TIMELOCK_SECONDS = 3600n; // 1 hora, valor que se usará para la firma y el contrato
+
   const [loadingRelayer, setLoadingRelayer] = useState<boolean>(false);
 
-  //smart contract
+  // smart contract
   const { writeContractAsync: writeTokenAsync } = useScaffoldWriteContract({ contractName: "USDC_Testnet" });
-
   const { writeContractAsync: writeSwapFactoryAsync } = useScaffoldWriteContract({ contractName: "SwapFactory" });
-
-  // const { data: allowance } = useScaffoldReadContract({
-  //   contractName: "USDC_Testnet",
-  //   functionName: "allowance",
-  //   args: [address, factoryAddress],
-  // });
 
   const { data: predictSwapAddress } = useScaffoldReadContract({
     contractName: "SwapFactory",
@@ -66,12 +66,12 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
       salt,
       "FusionSwapIntentERC20",
       "1",
-      address,
+      address, // Sender
       hashlock,
-      3600n,
-      address,
+      TIMELOCK_SECONDS, // <-- Pasamos el timelock fijo para la predicción
+      address, // Receiver
       fromTokenAddress,
-      parseUnits(fromAmount, decimal ?? 18),
+      decimal !== undefined ? parseUnits(fromAmount, decimal) : 0n,
     ],
   });
 
@@ -81,22 +81,24 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
     args: [address],
   });
 
-  //effects
+  // effects
   useEffect(() => {
-    getHashLock();
+    getHashLockAndSalt();
   }, []);
 
-  console.log(predictSwapAddress);
-
-  //functions
-  const getHashLock = async () => {
+  const getHashLockAndSalt = async () => {
     try {
       const req = await fetch("api/hashlock");
-
       const res: { hashlock: `0x${string}`; secret: `0x${string}` } = await req.json();
 
       setHashLock(res.hashlock);
       setSecret(res.secret);
+
+      const timestamp = Date.now().toString();
+      const generateSalt = keccak256(toBytes(`${address}-${timestamp}-${res.hashlock}`));
+      setSalt(generateSalt);
+      localStorage.setItem("hashlock", res.hashlock);
+      localStorage.setItem("salt", generateSalt);
     } catch (err) {
       console.log(err);
     }
@@ -104,33 +106,25 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
 
   const handleApprove = async () => {
     try {
+      if (decimal === undefined) return;
       await writeTokenAsync({
         functionName: "approve",
-        args: [factoryAddress, parseUnits(fromAmount, 6)],
+        args: [factoryAddress, parseUnits(fromAmount, decimal)],
       });
-
-      const timestamp = Date.now().toString();
-      const generateSalt = keccak256(toBytes(`${address}-${timestamp}`));
-
-      setSalt(generateSalt);
-      localStorage.setItem("hashlock", hashlock);
       setCurrentProgress(25);
     } catch (e) {
-      console.error("Error setting greeting:", e);
+      console.error("Error approving tokens:", e);
     }
   };
 
   const handleSign = async () => {
-    if (decimal === undefined) return;
+    if (decimal === undefined || predictSwapAddress === undefined) return;
 
     const amount = parseUnits(fromAmount, decimal);
     const hashlockSaved = localStorage.getItem("hashlock") as `0x${string}` | null;
     if (hashlockSaved === null) return;
 
-    console.log(hashlockSaved, "hashlock");
-    console.log(predictSwapAddress, "predictswap");
-    console.log(salt, "salt");
-    console.log(fromNetworkId, "fromnt");
+    const timelockSeconds = TIMELOCK_SECONDS;
 
     const signature = await signTypedDataAsync({
       domain: {
@@ -162,38 +156,32 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
         toToken: toTokenAddress,
         amount,
         hashlock: hashlockSaved,
-        timelock: BigInt(Math.floor(Date.now() / 1000)) + 3600n, //1 hour,
+        timelock: timelockSeconds,
       },
     });
 
-    console.log(signature);
+    console.log("Generated signature:", signature);
     localStorage.setItem("signature", signature);
-    // setCurrentProgress(66.6);
     setCurrentProgress(50);
   };
 
   const handleCreateSwap = async () => {
     try {
-      setLoadingRelayer(true);
       if (decimal === undefined) return;
+      const hashlockSaved = localStorage.getItem("hashlock") as `0x${string}` | null;
+      const saltSaved = localStorage.getItem("salt") as `0x${string}` | null;
+      if (hashlockSaved === null || saltSaved === null) return;
+
+      setLoadingRelayer(true);
       await writeSwapFactoryAsync({
         functionName: "createSwap",
-        args: [
-          salt,
-          hashlock, // Hash del secreto
-          3600n, // 1 hora
-          address, // Destinatario
-          fromTokenAddress, // Contrato del token
-          parseUnits(fromAmount, decimal),
-        ],
+        args: [saltSaved, hashlockSaved, TIMELOCK_SECONDS, address, fromTokenAddress, parseUnits(fromAmount, decimal)],
       });
 
-      // setCurrentProgress(99.9);
       setCurrentProgress(75);
       handleRelayer();
     } catch (e) {
-      console.error("Error setting greeting:", e);
-    } finally {
+      console.error("Error creating swap:", e);
       setLoadingRelayer(false);
     }
   };
@@ -201,6 +189,9 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
   const handleRelayer = async () => {
     try {
       const signature = localStorage.getItem("signature");
+      if (!signature) {
+        throw new Error("No signature found.");
+      }
 
       const req = await fetch("api/relayer", {
         method: "POST",
@@ -223,16 +214,25 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
 
       const res = await req.json();
 
-      if (req.status !== 200) throw Error("a ocurred a error");
-      console.log(res);
-      getHashLock();
+      if (req.status !== 200) throw new Error(res.error || "An error occurred.");
+      console.log("Relayer response:", res);
+      setCurrentProgress(100);
     } catch (err) {
-      console.log(err);
+      console.error(err);
+      setLoadingRelayer(false);
     }
   };
 
+  const handleRestart = async () => {
+    setOpenDialog(false);
+    restarForm();
+    await getHashLockAndSalt();
+
+    setCurrentProgress(0);
+  };
+
   return (
-    <Dialog>
+    <Dialog open={openDialog} onOpenChange={open => setOpenDialog(open)}>
       <DialogTrigger asChild>
         <Button
           className="bg-gradient w-full"
@@ -259,15 +259,19 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
             {currentProgress < 25
               ? " Approval of tokens for exchange"
               : currentProgress < 50
-                ? "Create exchange intent"
-                : "Sign Swap"}
+                ? "Sign Swap"
+                : currentProgress < 75
+                  ? "Create exchange intent"
+                  : "Swap in progress"}
           </DialogTitle>
           <DialogDescription className="text-black/80">
             {currentProgress < 25
               ? " Before performing the swap, you need to approve the amount of tokens you want to exchange. This approval allows the smart contract to access your tokens and execute the transaction securely."
               : currentProgress < 50
-                ? "The exchange intention is deployed with hashlock and timelock. This allows the swap to be executed only if the correct secret is revealed before the time limit expires."
-                : "Signing this message allows the relayer to execute the swap on the other chain."}
+                ? "You will sign a message to authorize the relayer to execute the swap on your behalf. This is a secure off-chain signature that does not cost gas."
+                : currentProgress < 75
+                  ? "The exchange intention is deployed with hashlock and timelock. This allows the swap to be executed only if the correct secret is revealed before the time limit expires."
+                  : "The relayer has been called and the swap is being processed across chains."}
           </DialogDescription>
         </DialogHeader>
         <section className="flex flex-col gap-4 justify-center">
@@ -292,10 +296,23 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
               Create Swap
             </Button>
           ) : (
-            <Button className="bg-gradient" onClick={handleRelayer} disabled={loadingRelayer}>
-              <RefreshCcw />
-              Call Relayer
-            </Button>
+            <>
+              <Button
+                className="bg-gradient"
+                onClick={handleRelayer}
+                disabled={loadingRelayer || currentProgress === 100}
+              >
+                <Cable />
+                Call Relayer
+              </Button>
+
+              {currentProgress === 100 && (
+                <Button className="bg-gradient" onClick={handleRestart}>
+                  <ListRestart />
+                  Other Swap
+                </Button>
+              )}
+            </>
           )}
         </section>
       </DialogContent>
