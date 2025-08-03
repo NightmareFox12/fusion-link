@@ -2,9 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Coin3D from "./Coin3d";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-// import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { ArrowRight, Lock, Shield, TrendingUp, Users, Wallet, Zap } from "lucide-react";
-// import { Badge } from "~~/components/shadcn/ui/badge";
+import { ArrowRight, Lock, Shield, TrendingUp, Users, Wallet, Wallet2Icon, Zap } from "lucide-react";
 import { Button } from "~~/components/shadcn/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~~/components/shadcn/ui/card";
 
@@ -18,9 +16,6 @@ export default function Landing() {
             <div className="relative w-8 h-8">
               <Image src={"/favicon.png"} alt="orbit dao" fill={true} />
             </div>
-            {/* <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
-              {/* <Zap className="w-5 h-5 text-white" /> */}
-            {/* </div>  */}
             <span className="text-xl font-bold text-white">Pay Fusion</span>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
@@ -48,9 +43,6 @@ export default function Landing() {
         <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-3xl" />
         <div className="container mx-auto px-4 lg:px-6 relative">
           <div className="text-center max-w-4xl mx-auto">
-            {/* <Badge className="mb-6 bg-purple-500/20 text-purple-300 border-purple-500/30">
-              🚀 Ahora en Beta - Únete a la revolución
-            </Badge> */}
             <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight lg:mx-16">
               Exchange without thinking.
               <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -69,25 +61,12 @@ export default function Landing() {
                       onClick={openConnectModal}
                       className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                     >
+                      <Wallet2Icon />
                       Connect Wallet
                     </Button>
                   );
                 }}
               </ConnectButton.Custom>
-              {/* <Button
-                size="lg"
-                className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white px-8 py-4 text-lg"
-              >
-                Comenzar Ahora
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button> */}
-              {/* <Button
-                size="lg"
-                variant="outline"
-                className="border-white/20 text-white hover:bg-white/10 px-8 py-4 text-lg bg-transparent"
-              >
-                Ver Demo
-              </Button> */}
             </div>
           </div>
         </div>

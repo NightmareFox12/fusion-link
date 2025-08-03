@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowRight, FilePen, LockOpen, RefreshCcw } from "lucide-react";
-import { keccak256, parseUnits, toBytes } from "viem";
+import { parseUnits } from "viem/utils";
 import { useSignTypedData } from "wagmi";
 import { Button } from "~~/components/shadcn/ui/button";
 import {
@@ -41,6 +41,7 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
   const { signTypedDataAsync } = useSignTypedData();
 
   //states
+  const [hashlock, setHashLock] = useState<`0x${string}`>("0x");
   const [currentProgress, setCurrentProgress] = useState<number>(0);
 
   //smart contract
@@ -60,6 +61,23 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
     args: [address],
   });
 
+  //effects
+  useEffect(() => {
+    const getHashLock = async () => {
+      try {
+        const req = await fetch("api/hashlock");
+
+        const res = await req.json();
+
+        console.log(res);
+        setHashLock(res);
+      } catch (err) {
+        console.log(err);
+      }
+    };
+    getHashLock();
+  }, []);
+
   //functions
   const handleApprove = async () => {
     try {
@@ -73,12 +91,6 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
       console.error("Error setting greeting:", e);
     }
   };
-
-  //TODO: Mejorar el dialog y el progress a 33% por step o 50% en caso que sean 2 steps, y guardar el progreso en caso de que cierre el dialog, tambien agregar el boton de cancelar approve.
-
-  //TODO: luego de crear el swap empeza a averigurar la forma de yo tener esa address porque creo que la vamos a necesitar para interactuar con el y 1nch
-
-  const hashlock = keccak256(toBytes("key-secret"));
 
   const handleCreateSwap = async () => {
     try {
@@ -192,7 +204,7 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
             parseFloat(fromAmount) === 0 ||
             decimal === undefined ||
             fromTokenAddress === "" ||
-            fromTokenAddress === toTokenAddress ||
+            (fromTokenAddress === toTokenAddress && fromNetworkId === toNetworkId) ||
             factoryAddress === undefined ||
             fromNetworkId === "" ||
             toNetworkId === ""
@@ -232,13 +244,13 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
               Aprove amount
             </Button>
           ) : currentProgress <= 60 ? (
-            <Button className="bg-gradient" onClick={handleSign}>
-              <FilePen /> Sign
-            </Button>
-          ) : (
             <Button className="bg-gradient" onClick={handleCreateSwap}>
               <RefreshCcw />
               Create Swap
+            </Button>
+          ) : (
+            <Button className="bg-gradient" onClick={handleSign}>
+              <FilePen /> Sign
             </Button>
           )}
         </section>

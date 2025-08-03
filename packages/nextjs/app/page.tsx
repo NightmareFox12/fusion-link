@@ -77,8 +77,6 @@ const ReceivePage: NextPage = () => {
     return fromTokensArr.find(t => t.value === fromToken);
   }, [fromToken, fromTokensArr]);
 
-  // https://copilot.microsoft.com/chats/ZZabzPjCHvnaNdhprDd2Z
-
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
       <div className="max-w-2xl mx-auto space-y-6">
