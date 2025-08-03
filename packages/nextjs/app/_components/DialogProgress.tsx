@@ -50,8 +50,7 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
   const [hashlock, setHashLock] = useState<`0x${string}`>("0x");
   const [currentProgress, setCurrentProgress] = useState<number>(0);
 
-  // El timelock es un valor fijo en segundos para ser consistente
-  const TIMELOCK_SECONDS = 3600n; // 1 hora, valor que se usará para la firma y el contrato
+  const TIMELOCK_SECONDS = 3600n;
 
   const [loadingRelayer, setLoadingRelayer] = useState<boolean>(false);
 
