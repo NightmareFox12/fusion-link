@@ -8,9 +8,9 @@ export interface IToken {
   decimal: 6 | 18;
 }
 
-const allTokens: IToken[] = [
+const optimismTokens: IToken[] = [
   {
-    value: "0x4C2AA252BEe766D3399850569713b55178934849",
+    value: "0x5fd84259d66Cd46123540766Be93DFE6D43130D7",
     label: "USDC Testnet",
     symbol: "USDC",
     icon: "usdc",
@@ -26,12 +26,19 @@ const etherlinkTokens: IToken[] = [
     icon: "xtz",
     decimal: 18,
   },
+  {
+    value: "0x4C2AA252BEe766D3399850569713b55178934849",
+    label: "USDC Testnet",
+    symbol: "USDC",
+    icon: "usdc",
+    decimal: 6,
+  },
 ];
 
 export const tokensByChain = (chainID: number): IToken[] => {
   if (chainID === etherlinkTestnet.id) {
-    return allTokens.concat(etherlinkTokens);
+    return etherlinkTokens;
   } else {
-    return allTokens;
+    return optimismTokens;
   }
 };

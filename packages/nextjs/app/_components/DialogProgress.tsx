@@ -291,7 +291,7 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
               <FilePen /> Sign
             </Button>
           ) : currentProgress < 75 ? (
-            <Button className="bg-gradient" onClick={handleCreateSwap}>
+            <Button className="bg-gradient" onClick={handleCreateSwap} disabled={loadingRelayer}>
               <RefreshCcw />
               Create Swap
             </Button>
