@@ -1,5 +1,5 @@
 import Image from "next/image";
-import Link from "next/link";
+// import Link from "next/link";
 import Coin3D from "./Coin3d";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { Wallet2Icon } from "lucide-react";
@@ -13,11 +13,11 @@ export default function Landing() {
         <div className="container mx-auto px-4 lg:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2 justify-center">
             <div className="relative w-8 h-8">
-              <Image src={"/favicon.png"} alt="orbit dao" fill={true} />
+              <Image src={"/favicon.png"} alt="favicon" fill={true} />
             </div>
             <span className="text-xl font-bold text-white">Fusion Link</span>
           </div>
-          <nav className="hidden md:flex items-center space-x-6">
+          {/* <nav className="hidden md:flex items-center space-x-6">
             <Link href="#features" className="text-gray-300 hover:text-white transition-colors">
               Características
             </Link>
@@ -33,7 +33,7 @@ export default function Landing() {
             >
               Conectar Wallet
             </Button>
-          </nav>
+          </nav> */}
         </div>
       </header>
 
