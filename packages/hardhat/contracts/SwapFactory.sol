@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "./FusionSwapIntentERC20.sol";
+import "@openzeppelin/contracts/utils/Create2.sol";
 
 /// @title SwapFactory to deploy and manage instances of FusionSwapIntentERC20
 /// @notice Enables the standardized creation of new ERC-20 atomic swaps
@@ -23,6 +24,7 @@ contract SwapFactory {
     );
 
     function createSwap(
+        bytes32 salt,
         bytes32 hashlock,
         uint256 timelockSeconds,
         address receiver,
@@ -42,16 +44,20 @@ contract SwapFactory {
             "Token transfer from user to factory failed. Check allowance."
         );
 
-        FusionSwapIntentERC20 newSwap = new FusionSwapIntentERC20(
-            name,
-            version,
-            user,
-            hashlock,
-            timelockSeconds,
-            receiver,
-            tokenAddress,
-            amount
+        bytes memory bytecode = abi.encodePacked(
+            type(FusionSwapIntentERC20).creationCode,
+            abi.encode(name, version, user, hashlock, timelockSeconds, receiver, tokenAddress, amount)
         );
+
+        address swapAddr;
+        assembly {
+            swapAddr := create2(0, add(bytecode, 0x20), mload(bytecode), salt)
+            if iszero(swapAddr) {
+                revert(0, 0)
+            }
+        }
+
+        FusionSwapIntentERC20 newSwap = FusionSwapIntentERC20(swapAddr);
 
         require(
             tokenInstance.transfer(address(newSwap), amount),
@@ -70,34 +76,23 @@ contract SwapFactory {
             block.timestamp + timelockSeconds
         );
     }
+
+    function predictSwapAddress(
+        bytes32 salt,
+        string memory _name,
+        string memory _version,
+        address creator,
+        bytes32 hashlock,
+        uint256 timelockSeconds,
+        address receiver,
+        address tokenAddress,
+        uint256 amount
+    ) public view returns (address) {
+        bytes memory bytecode = abi.encodePacked(
+            type(FusionSwapIntentERC20).creationCode,
+            abi.encode(_name, _version, creator, hashlock, timelockSeconds, receiver, tokenAddress, amount)
+        );
+
+        return Create2.computeAddress(salt, keccak256(bytecode), address(this));
+    }
 }
-
-// import "@openzeppelin/contracts/utils/Create2.sol";
-
-// function predictSwapAddress(
-//     bytes32 salt,
-//     string memory _name,
-//     string memory _version,
-//     address creator,
-//     bytes32 hashlock,
-//     uint256 timelockSeconds,
-//     address receiver,
-//     address tokenAddress,
-//     uint256 amount
-// ) public view returns (address) {
-//     bytes memory bytecode = abi.encodePacked(
-//         type(FusionSwapIntentERC20).creationCode,
-//         abi.encode(
-//             _name,
-//             _version,
-//             creator,
-//             hashlock,
-//             timelockSeconds,
-//             receiver,
-//             tokenAddress,
-//             amount
-//         )
-//     );
-
-//     return Create2.computeAddress(salt, keccak256(bytecode), address(this));
-// }

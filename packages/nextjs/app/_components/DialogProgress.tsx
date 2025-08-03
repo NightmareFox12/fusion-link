@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { ArrowRight, FilePen, LockOpen, RefreshCcw } from "lucide-react";
-import { parseUnits } from "viem/utils";
+import { keccak256, parseUnits, toBytes } from "viem/utils";
 import { useSignTypedData } from "wagmi";
 import { Button } from "~~/components/shadcn/ui/button";
 import {
@@ -41,6 +41,7 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
   const { signTypedDataAsync } = useSignTypedData();
 
   //states
+  const [salt, setSalt] = useState<`0x${string}`>("0x");
   const [hashlock, setHashLock] = useState<`0x${string}`>("0x");
   const [currentProgress, setCurrentProgress] = useState<number>(0);
 
@@ -54,6 +55,22 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
   //   functionName: "allowance",
   //   args: [address, factoryAddress],
   // });
+
+  const { data: predictSwapAddress } = useScaffoldReadContract({
+    contractName: "SwapFactory",
+    functionName: "predictSwapAddress",
+    args: [
+      salt,
+      "FusionSwapIntentERC20",
+      "1",
+      address,
+      hashlock,
+      3600n,
+      address,
+      fromTokenAddress,
+      parseUnits(fromAmount, decimal ?? 18),
+    ],
+  });
 
   const { data: swapAddress } = useScaffoldReadContract({
     contractName: "SwapFactory",
@@ -78,6 +95,8 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
     getHashLock();
   }, []);
 
+  console.log(predictSwapAddress);
+
   //functions
   const handleApprove = async () => {
     try {
@@ -86,27 +105,12 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
         args: [factoryAddress, parseUnits(fromAmount, 6)],
       });
 
+      const timestamp = Date.now().toString();
+      const generateSalt = keccak256(toBytes(`${address}-${timestamp}`));
+
+      setSalt(generateSalt);
+      localStorage.setItem("hashlock", hashlock);
       setCurrentProgress(33.3);
-    } catch (e) {
-      console.error("Error setting greeting:", e);
-    }
-  };
-
-  const handleCreateSwap = async () => {
-    try {
-      if (decimal === undefined) return;
-      await writeSwapFactoryAsync({
-        functionName: "createSwap",
-        args: [
-          hashlock, // Hash del secreto
-          3600n, // 1 hora
-          address, // Destinatario
-          fromTokenAddress, // Contrato del token
-          parseUnits(fromAmount, decimal),
-        ],
-      });
-
-      setCurrentProgress(66.6);
     } catch (e) {
       console.error("Error setting greeting:", e);
     }
@@ -116,12 +120,15 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
     if (decimal === undefined) return;
 
     const amount = parseUnits(fromAmount, decimal);
+    const hashlockSaved = localStorage.getItem("hashlock") as `0x${string}` | null;
+    if (hashlockSaved === null) return;
+
     const signature = await signTypedDataAsync({
       domain: {
         name: "FusionSwapIntentERC20",
         version: "1",
         chainId: parseInt(toNetworkId),
-        verifyingContract: swapAddress,
+        verifyingContract: predictSwapAddress,
       },
       types: {
         SwapIntent: [
@@ -145,13 +152,34 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
         fromToken: fromTokenAddress,
         toToken: fromTokenAddress,
         amount,
-        hashlock,
+        hashlock: hashlockSaved,
         timelock: BigInt(Math.floor(Date.now() / 1000)) + 3600n, //1 hour,
       },
     });
 
     console.log(signature);
     setCurrentProgress(99.9);
+  };
+
+  const handleCreateSwap = async () => {
+    try {
+      if (decimal === undefined) return;
+      await writeSwapFactoryAsync({
+        functionName: "createSwap",
+        args: [
+          salt,
+          hashlock, // Hash del secreto
+          3600n, // 1 hora
+          address, // Destinatario
+          fromTokenAddress, // Contrato del token
+          parseUnits(fromAmount, decimal),
+        ],
+      });
+
+      setCurrentProgress(66.6);
+    } catch (e) {
+      console.error("Error setting greeting:", e);
+    }
   };
 
   // const sendSign = async (
@@ -207,7 +235,8 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
             (fromTokenAddress === toTokenAddress && fromNetworkId === toNetworkId) ||
             factoryAddress === undefined ||
             fromNetworkId === "" ||
-            toNetworkId === ""
+            toNetworkId === "" ||
+            hashlock === "0x"
           }
         >
           Next
@@ -221,14 +250,14 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
               ? " Approval of tokens for exchange"
               : currentProgress <= 60
                 ? "Create exchange intent"
-                : ""}
+                : "Sign Swap"}
           </DialogTitle>
           <DialogDescription className="text-black/80">
             {currentProgress < 30
               ? " Before performing the swap, you need to approve the amount of tokens you want to exchange. This approval allows the smart contract to access your tokens and execute the transaction securely."
               : currentProgress <= 60
                 ? "The exchange intention is deployed with hashlock and timelock. This allows the swap to be executed only if the correct secret is revealed before the time limit expires."
-                : ""}
+                : "Signing this message allows the relayer to execute the swap on the other chain."}
           </DialogDescription>
         </DialogHeader>
         <section className="flex flex-col gap-4 justify-center">
@@ -244,13 +273,13 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
               Aprove amount
             </Button>
           ) : currentProgress <= 60 ? (
+            <Button className="bg-gradient" onClick={handleSign}>
+              <FilePen /> Sign
+            </Button>
+          ) : (
             <Button className="bg-gradient" onClick={handleCreateSwap}>
               <RefreshCcw />
               Create Swap
-            </Button>
-          ) : (
-            <Button className="bg-gradient" onClick={handleSign}>
-              <FilePen /> Sign
             </Button>
           )}
         </section>

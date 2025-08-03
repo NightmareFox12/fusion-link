@@ -90,7 +90,7 @@ const ReceivePage: NextPage = () => {
         </div>
 
         {/* Main Form */}
-        <Card className="shadow-lg">
+        <Card className="shadow-lg bg-pink-50">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Wallet className="h-5 w-5" />
@@ -129,7 +129,18 @@ const ReceivePage: NextPage = () => {
                     <SelectValue placeholder="Select a network" />
                   </SelectTrigger>
                   <SelectContent>
-                    {networks.map(network => (
+                    <SelectItem
+                      key={networks[1].chainId}
+                      value={networks[1].chainId.toString()}
+                      className="cursor-pointer p-2"
+                    >
+                      <div className="flex items-center gap-2">
+                        <NetworkIcon id={networks[1].icon} variant="branded" className="size-8" />
+                        <span className="">{networks[1].label}</span>
+                        <Badge variant="outline">Chain {networks[1].chainId}</Badge>
+                      </div>
+                    </SelectItem>
+                    {/* {networks.map(network => (
                       <SelectItem
                         key={network.chainId}
                         value={network.chainId.toString()}
@@ -141,7 +152,7 @@ const ReceivePage: NextPage = () => {
                           <Badge variant="outline">Chain {network.chainId}</Badge>
                         </div>
                       </SelectItem>
-                    ))}
+                    ))} */}
                   </SelectContent>
                 </Select>
               </div>

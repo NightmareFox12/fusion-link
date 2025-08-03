@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   128123: {
     SwapFactory: {
-      address: "0xC5d2F398162be38f13bb12b494a8BEDD8D620fb9",
+      address: "0xCf231789Db35048c0Dd724f6808A3b3be90014b5",
       abi: [
         {
           anonymous: false,
@@ -56,6 +56,11 @@ const deployedContracts = {
           inputs: [
             {
               internalType: "bytes32",
+              name: "salt",
+              type: "bytes32",
+            },
+            {
+              internalType: "bytes32",
               name: "hashlock",
               type: "bytes32",
             },
@@ -83,6 +88,65 @@ const deployedContracts = {
           name: "createSwap",
           outputs: [],
           stateMutability: "nonpayable",
+          type: "function",
+        },
+        {
+          inputs: [
+            {
+              internalType: "bytes32",
+              name: "salt",
+              type: "bytes32",
+            },
+            {
+              internalType: "string",
+              name: "_name",
+              type: "string",
+            },
+            {
+              internalType: "string",
+              name: "_version",
+              type: "string",
+            },
+            {
+              internalType: "address",
+              name: "creator",
+              type: "address",
+            },
+            {
+              internalType: "bytes32",
+              name: "hashlock",
+              type: "bytes32",
+            },
+            {
+              internalType: "uint256",
+              name: "timelockSeconds",
+              type: "uint256",
+            },
+            {
+              internalType: "address",
+              name: "receiver",
+              type: "address",
+            },
+            {
+              internalType: "address",
+              name: "tokenAddress",
+              type: "address",
+            },
+            {
+              internalType: "uint256",
+              name: "amount",
+              type: "uint256",
+            },
+          ],
+          name: "predictSwapAddress",
+          outputs: [
+            {
+              internalType: "address",
+              name: "",
+              type: "address",
+            },
+          ],
+          stateMutability: "view",
           type: "function",
         },
         {
