@@ -273,7 +273,7 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
         <section className="flex flex-col gap-4 justify-center">
           <div>
             <p className="text-sm font-semibold text-center mt-0">
-              {currentProgress < 25 ? 1 : currentProgress < 50 ? 2 : 3}/3
+              {currentProgress < 25 ? 1 : currentProgress < 50 ? 2 : currentProgress < 75 ? 3 : 4}/4
             </p>
             <Progress value={currentProgress} />
           </div>
@@ -304,37 +304,3 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
 };
 
 export default DialogSwapProgress;
-
-// DEbo crear mi propio RelayerApi, y mi resolver es mi propia wallet para hacer el cambio cross chain mientras pasa el handleWebpackExternalForEdgeRuntime, el relaye debo desplegarlo en un VPS free para dejarlo despierto y escuchando eventos con viem
-
-// import { createWalletClient, http } from 'viem'
-// import { privateKeyToAccount } from 'viem/accounts'
-// import { sepolia } from '@viem/chains'
-// import dotenv from 'dotenv'
-// import { abi } from './SwapContractAbi'
-
-// dotenv.config()
-
-// const contractAddress = '0xTuDireccionDelContrato'
-// const privateKey = process.env.RELAYER_KEY as `0x${string}`
-
-// async function main() {
-//   const account = privateKeyToAccount(privateKey)
-
-//   const client = createWalletClient({
-//     account,
-//     chain: sepolia,
-//     transport: http()
-//   })
-
-//   const hash = await client.writeContract({
-//     address: contractAddress,
-//     abi,
-//     functionName: 'executeSwap',
-//     args: [], // Aquí los argumentos si requiere la función
-//   })
-
-//   console.log('Tx enviada:', hash)
-// }
-
-// main().catch(console.error)

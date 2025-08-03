@@ -38,12 +38,12 @@ export default function ScaffoldHeader() {
       <div className="mx-4 h-16 flex items-center justify-between gap-2 md:gap-4 lg:gap-5">
         <div className="flex items-center gap-2 justify-center">
           <div className="relative w-4 h-4 md:w-8 md:h-8">
-            <Image src={"/favicon.png"} alt="orbit dao" fill={true} />
+            <Image src={"/favicon.png"} alt="icon" fill={true} />
           </div>
           {/* <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
               {/* <Zap className="w-5 h-5 text-white" /> */}
           {/* </div>  */}
-          <span className=" sm:text-xl font-bold text-white">Pay Fusion</span>
+          <span className=" sm:text-xl font-bold text-white">Fusion Link</span>
         </div>
         <nav className="hidden md:flex space-x-4 flex-1">
           {menuLinks.map(({ label, href, icon }) => {

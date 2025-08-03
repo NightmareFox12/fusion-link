@@ -2,9 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import Coin3D from "./Coin3d";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { ArrowRight, Lock, Shield, TrendingUp, Users, Wallet, Wallet2Icon, Zap } from "lucide-react";
+import { Wallet2Icon } from "lucide-react";
 import { Button } from "~~/components/shadcn/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~~/components/shadcn/ui/card";
 
 export default function Landing() {
   return (
@@ -16,7 +15,7 @@ export default function Landing() {
             <div className="relative w-8 h-8">
               <Image src={"/favicon.png"} alt="orbit dao" fill={true} />
             </div>
-            <span className="text-xl font-bold text-white">Pay Fusion</span>
+            <span className="text-xl font-bold text-white">Fusion Link</span>
           </div>
           <nav className="hidden md:flex items-center space-x-6">
             <Link href="#features" className="text-gray-300 hover:text-white transition-colors">
@@ -44,10 +43,10 @@ export default function Landing() {
         <div className="container mx-auto px-4 lg:px-6 relative">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6 leading-tight lg:mx-16">
-              Exchange without thinking.
+              Fusion Link:
               <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                 {" "}
-                Receive without limits.
+                The bridge that does the heavy lifting.
               </span>
             </h1>
             <p className="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto leading-relaxed">
@@ -72,11 +71,11 @@ export default function Landing() {
         </div>
 
         <Coin3D coinName="optimis" className="left-0" appearanceRight={true} />
-        <Coin3D coinName="arbitrum" className="right-0" />
+        <Coin3D coinName="usdc" className="right-0" />
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-black/20 backdrop-blur-sm">
+      {/* <section id="features" className="py-20 bg-black/20 backdrop-blur-sm">
         <div className="container mx-auto px-4 lg:px-6">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">Why choose swap inbox?</h2>
@@ -159,10 +158,10 @@ export default function Landing() {
             </Card>
           </div>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA Section */}
-      <section className="py-20">
+      {/* <section className="py-20">
         <div className="container mx-auto px-4 lg:px-6">
           <Card className="bg-gradient-to-r from-purple-600/20 to-pink-600/20 border-purple-500/30 backdrop-blur-sm">
             <CardContent className="p-12 text-center">
@@ -190,7 +189,7 @@ export default function Landing() {
             </CardContent>
           </Card>
         </div>
-      </section>
+      </section> */}
 
       {/* Footer */}
       {/* <footer className="border-t border-white/10 bg-black/20 backdrop-blur-sm">

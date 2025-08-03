@@ -7,7 +7,7 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 const deployedContracts = {
   128123: {
     SwapFactory: {
-      address: "0xCf231789Db35048c0Dd724f6808A3b3be90014b5",
+      address: "0xd9D543A872557D0C8A0E6ae701C53DA48109B055",
       abi: [
         {
           anonymous: false,

@@ -9,7 +9,7 @@ import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { cn } from "~~/lib/shadcn/utils";
 
 type Coin3DProps = {
-  coinName: "optimis" | "arbitrum";
+  coinName: "optimis" | "usdc";
   className?: string;
   appearanceRight?: boolean;
 };

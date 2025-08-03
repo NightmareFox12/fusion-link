@@ -22,7 +22,9 @@ export async function POST(request: Request) {
   }
 
   try {
-    request.json().then(console.log);
+    const body = await request.json();
+
+    console.log(body);
 
     const {
       contractAddress,
@@ -35,7 +37,7 @@ export async function POST(request: Request) {
       secret,
       receiverAddress,
       tokenDecimal,
-    } = await request.json();
+    } = body;
 
     if (
       !contractAddress ||
