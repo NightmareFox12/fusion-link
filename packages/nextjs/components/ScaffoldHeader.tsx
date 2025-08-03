@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { FaucetButton, RainbowKitCustomConnectButton } from "./scaffold-eth";
 import { Button } from "./shadcn/ui/button";
-import { BugIcon, HandCoinsIcon, Home } from "lucide-react";
+import { BugIcon, Home } from "lucide-react";
 import { hardhat } from "viem/chains";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth";
 
@@ -20,11 +20,6 @@ export const menuLinks: HeaderMenuLink[] = [
     icon: <Home />,
     label: "Home",
     href: "/",
-  },
-  {
-    icon: <HandCoinsIcon />,
-    label: "Receive",
-    href: "/receive",
   },
   {
     label: "Debug Contracts",

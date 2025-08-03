@@ -17,7 +17,7 @@ contract SwapFactory {
         address swapAddress,
         address indexed creator,
         address indexed receiver,
-        address indexed token, 
+        address indexed token,
         uint256 amount,
         uint256 timelockEnd
     );
@@ -71,3 +71,33 @@ contract SwapFactory {
         );
     }
 }
+
+// import "@openzeppelin/contracts/utils/Create2.sol";
+
+// function predictSwapAddress(
+//     bytes32 salt,
+//     string memory _name,
+//     string memory _version,
+//     address creator,
+//     bytes32 hashlock,
+//     uint256 timelockSeconds,
+//     address receiver,
+//     address tokenAddress,
+//     uint256 amount
+// ) public view returns (address) {
+//     bytes memory bytecode = abi.encodePacked(
+//         type(FusionSwapIntentERC20).creationCode,
+//         abi.encode(
+//             _name,
+//             _version,
+//             creator,
+//             hashlock,
+//             timelockSeconds,
+//             receiver,
+//             tokenAddress,
+//             amount
+//         )
+//     );
+
+//     return Create2.computeAddress(salt, keccak256(bytecode), address(this));
+// }

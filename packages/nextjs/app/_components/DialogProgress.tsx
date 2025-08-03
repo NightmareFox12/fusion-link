@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { formatUnits, keccak256, parseUnits, toBytes } from "viem";
+import { ArrowRight, FilePen, LockOpen, RefreshCcw } from "lucide-react";
+import { keccak256, parseUnits, toBytes } from "viem";
 import { useSignTypedData } from "wagmi";
 import { Button } from "~~/components/shadcn/ui/button";
 import {
@@ -24,7 +25,7 @@ type DialogSwapProgressProps = {
   fromAmount: string;
   toNetworkId: string;
   toTokenAddress: string;
-  decimal: 6 | 18;
+  decimal: 6 | 18 | undefined;
 };
 
 const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
@@ -47,11 +48,11 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
 
   const { writeContractAsync: writeSwapFactoryAsync } = useScaffoldWriteContract({ contractName: "SwapFactory" });
 
-  const { data: allowance } = useScaffoldReadContract({
-    contractName: "USDC_Testnet",
-    functionName: "allowance",
-    args: [address, factoryAddress],
-  });
+  // const { data: allowance } = useScaffoldReadContract({
+  //   contractName: "USDC_Testnet",
+  //   functionName: "allowance",
+  //   args: [address, factoryAddress],
+  // });
 
   const { data: swapAddress } = useScaffoldReadContract({
     contractName: "SwapFactory",
@@ -73,15 +74,15 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
     }
   };
 
-  //TODO: ahora debo buscar las address de los tokens para darle approve, lo bueno que etherlink tiene 3 nada mas.
-
   //TODO: Mejorar el dialog y el progress a 33% por step o 50% en caso que sean 2 steps, y guardar el progreso en caso de que cierre el dialog, tambien agregar el boton de cancelar approve.
 
   //TODO: luego de crear el swap empeza a averigurar la forma de yo tener esa address porque creo que la vamos a necesitar para interactuar con el y 1nch
 
   const hashlock = keccak256(toBytes("key-secret"));
+
   const handleCreateSwap = async () => {
     try {
+      if (decimal === undefined) return;
       await writeSwapFactoryAsync({
         functionName: "createSwap",
         args: [
@@ -100,12 +101,14 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
   };
 
   const handleSign = async () => {
+    if (decimal === undefined) return;
+
     const amount = parseUnits(fromAmount, decimal);
     const signature = await signTypedDataAsync({
       domain: {
         name: "FusionSwapIntentERC20",
         version: "1",
-        chainId: 128123,
+        chainId: parseInt(toNetworkId),
         verifyingContract: swapAddress,
       },
       types: {
@@ -125,8 +128,8 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
       message: {
         sender: address,
         receiver: address,
-        fromChainId: 128123n,
-        toChainId: 10n,
+        fromChainId: BigInt(fromNetworkId),
+        toChainId: BigInt(toNetworkId),
         fromToken: fromTokenAddress,
         toToken: fromTokenAddress,
         amount,
@@ -136,53 +139,47 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
     });
 
     console.log(signature);
-    await sendSign(signature, fromTokenAddress, fromTokenAddress, address, address, amount, amount, 128123n.toString());
     setCurrentProgress(99.9);
   };
 
-  const sendSign = async (
-    signature: string,
-    fromTokenAddress: string,
-    toTokenAddress: string,
-    fromAddress: string,
-    toAddress: string,
-    fromAmount: bigint,
-    toAmount: bigint,
-    srcChainId: string,
-  ) => {
-    try {
-      const req = await fetch("api/look", {
-        method: "POST",
-        headers: {
-          "Content-type": "application/json",
-        },
-        body: JSON.stringify({
-          hashlock,
-          signature,
-          fromTokenAddress,
-          toTokenAddress,
-          fromAddress,
-          toAddress,
-          fromAmount: fromAmount.toString(),
-          toAmount: toAmount.toString(),
-          srcChainId,
-        }),
-      });
+  // const sendSign = async (
+  //   signature: string,
+  //   fromTokenAddress: string,
+  //   toTokenAddress: string,
+  //   fromAddress: string,
+  //   toAddress: string,
+  //   amount: bigint,
+  //   srcChainId: string,
+  //   dstChainID: string,
+  // ) => {
+  //   // await sendSign(signature, fromTokenAddress, fromTokenAddress, address, address, amount, fromNetworkId, toNetworkId);
 
-      const res = await req.json();
+  //   try {
+  //     const req = await fetch("api/look", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         hashlock,
+  //         signature,
+  //         fromTokenAddress,
+  //         toTokenAddress,
+  //         fromAddress,
+  //         toAddress,
+  //         amount,
+  //         srcChainId,
+  //         dstChainID,
+  //       }),
+  //     });
 
-      console.log(res);
-    } catch (err) {
-      console.log(err);
-    }
-  };
+  //     const res = await req.json();
 
-  // useEffect(() => {
-  //   if (swapAddress !== undefined && !swapAddress.includes("0x0000000000000")) setCurrentProgress(66.6);
-  //   else if (allowance !== undefined && allowance > 0) setCurrentProgress(33.3);
-  //   else setCurrentProgress(0);
-  // }, [allowance, swapAddress]);
-  // console.log(currentProgress);
+  //     console.log(res);
+  //   } catch (err) {
+  //     console.log(err);
+  //   }
+  // };
 
   return (
     <Dialog>
@@ -190,38 +187,59 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
         <Button
           className="bg-gradient w-full"
           disabled={
-            parseFloat(fromAmount) <= 0 ||
+            swapAddress === undefined ||
+            fromAmount === "" ||
+            parseFloat(fromAmount) === 0 ||
+            decimal === undefined ||
             fromTokenAddress === "" ||
+            fromTokenAddress === toTokenAddress ||
             factoryAddress === undefined ||
             fromNetworkId === "" ||
-            toNetworkId === "" ||
-            fromTokenAddress === toTokenAddress
+            toNetworkId === ""
           }
         >
           Next
+          <ArrowRight />
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="bg-purple-50">
         <DialogHeader>
-          <DialogTitle>Are you absolutely sure?</DialogTitle>
-          <DialogDescription>
-            This action cannot be undone. This will permanently delete your account and remove your data from our
-            servers.
+          <DialogTitle className="text-center">
+            {currentProgress < 30
+              ? " Approval of tokens for exchange"
+              : currentProgress <= 60
+                ? "Create exchange intent"
+                : ""}
+          </DialogTitle>
+          <DialogDescription className="text-black/80">
+            {currentProgress < 30
+              ? " Before performing the swap, you need to approve the amount of tokens you want to exchange. This approval allows the smart contract to access your tokens and execute the transaction securely."
+              : currentProgress <= 60
+                ? "The exchange intention is deployed with hashlock and timelock. This allows the swap to be executed only if the correct secret is revealed before the time limit expires."
+                : ""}
           </DialogDescription>
         </DialogHeader>
-        <section>
-          <span>Progress</span>
-          <Progress value={currentProgress} />
+        <section className="flex flex-col gap-4 justify-center">
+          <div>
+            <p className="text-sm font-semibold text-center mt-0">
+              {currentProgress < 30 ? 1 : currentProgress <= 60 ? 2 : 3}/3
+            </p>
+            <Progress value={currentProgress} />
+          </div>
           {currentProgress < 30 ? (
-            <Button onClick={handleApprove}>Aprove amount</Button>
+            <Button className="bg-gradient" onClick={handleApprove}>
+              <LockOpen />
+              Aprove amount
+            </Button>
           ) : currentProgress <= 60 ? (
-            <Button onClick={handleCreateSwap}>Create Swap</Button>
+            <Button className="bg-gradient" onClick={handleSign}>
+              <FilePen /> Sign
+            </Button>
           ) : (
-            <article>
-              <p>{formatUnits(allowance ?? 0n, 6)}</p>
-
-              <Button onClick={handleSign}>Sign</Button>
-            </article>
+            <Button className="bg-gradient" onClick={handleCreateSwap}>
+              <RefreshCcw />
+              Create Swap
+            </Button>
           )}
         </section>
       </DialogContent>
