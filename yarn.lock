@@ -4360,7 +4360,6 @@ __metadata:
     "@types/eslint": ~9.6.1
     "@types/mocha": ~10.0.10
     "@types/prettier": ~3.0.0
-    "@types/qrcode": ~1.5.5
     "@typescript-eslint/eslint-plugin": ~8.27.0
     "@typescript-eslint/parser": ~8.27.0
     chai: ~4.5.0
@@ -4376,7 +4375,6 @@ __metadata:
     hardhat-gas-reporter: ~2.2.1
     prettier: ^3.5.3
     prettier-plugin-solidity: ~1.4.1
-    qrcode: ~1.5.4
     solidity-coverage: ~0.8.13
     ts-node: ~10.9.1
     typechain: ~8.3.2
@@ -5310,7 +5308,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/qrcode@npm:^1, @types/qrcode@npm:~1.5.5":
+"@types/qrcode@npm:^1":
   version: 1.5.5
   resolution: "@types/qrcode@npm:1.5.5"
   dependencies:
@@ -16427,7 +16425,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"qrcode@npm:^1.5.4, qrcode@npm:~1.5.4":
+"qrcode@npm:^1.5.4":
   version: 1.5.4
   resolution: "qrcode@npm:1.5.4"
   dependencies:

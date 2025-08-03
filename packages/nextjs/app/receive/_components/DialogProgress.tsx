@@ -19,16 +19,22 @@ import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth/useScaffoldWrite
 type DialogSwapProgressProps = {
   address: string;
   factoryAddress: `0x${string}` | undefined;
+  fromNetworkId: string;
   fromTokenAddress: string;
   fromAmount: string;
+  toNetworkId: string;
+  toTokenAddress: string;
   decimal: 6 | 18;
 };
 
 const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
   address,
   factoryAddress,
+  fromNetworkId,
   fromTokenAddress,
   fromAmount,
+  toNetworkId,
+  toTokenAddress,
   decimal,
 }) => {
   const { signTypedDataAsync } = useSignTypedData();
@@ -92,8 +98,6 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
       console.error("Error setting greeting:", e);
     }
   };
-  console.log(fromAmount);
-  console.log(parseUnits(fromAmount, decimal));
 
   const handleSign = async () => {
     const amount = parseUnits(fromAmount, decimal);
@@ -183,7 +187,17 @@ const DialogSwapProgress: React.FC<DialogSwapProgressProps> = ({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button className="bg-gradient w-full" disabled={parseFloat(fromAmount) < 0}>
+        <Button
+          className="bg-gradient w-full"
+          disabled={
+            parseFloat(fromAmount) <= 0 ||
+            fromTokenAddress === "" ||
+            factoryAddress === undefined ||
+            fromNetworkId === "" ||
+            toNetworkId === "" ||
+            fromTokenAddress === toTokenAddress
+          }
+        >
           Next
         </Button>
       </DialogTrigger>

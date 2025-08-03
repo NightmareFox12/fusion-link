@@ -13,6 +13,17 @@ export async function POST(request: Request) {
     srcChainId,
   } = await request.json();
 
+  // [Usuario inicia swap de USDC en Etherlink]
+  //         ↓
+  // [AtomicSwapIntent asegura la operación con hashlock]
+  //         ↓
+  // [Fusion+ detecta la liberación del secreto]
+  //         ↓
+  // [Relayer ejecuta swap USDC → USDT en Optimism]
+  //         ↓
+  // [Usuario recibe USDT en red destino]
+  //Con fusion+ en ehterlink cross-chain. Como fusion es chimbin y aun no tiene etherlink tambien hay que hacer un tal Atomic Swap with Hashlock/Timelock for Intent-Based Execution
+
   const payload = {
     order: {
       salt: BigInt(Date.now()).toString(),

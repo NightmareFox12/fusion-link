@@ -5,7 +5,7 @@ import DialogSwapProgress from "./_components/DialogProgress";
 import { NetworkIcon, TokenIcon } from "@web3icons/react";
 import { ArrowDownUp, Coins, Loader, Network, Wallet, WalletMinimalIcon } from "lucide-react";
 import { NextPage } from "next";
-// import QRcode from "qrcode";
+import { formatEther } from "viem";
 import { useAccount } from "wagmi";
 import { Address } from "~~/components/scaffold-eth";
 import { Badge } from "~~/components/shadcn/ui/badge";
@@ -13,21 +13,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~~/co
 import { Input } from "~~/components/shadcn/ui/input";
 import { Label } from "~~/components/shadcn/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "~~/components/shadcn/ui/select";
-// import { Separator } from "~~/components/shadcn/ui/separator";
-import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
+import { useDeployedContractInfo, useWatchBalance } from "~~/hooks/scaffold-eth";
 
 const networks = [
-  // { label: "Ethereum", chainId: 1, icon: "ethereum" },
   { label: "Optimism Testnet", chainId: 11155420, icon: "optimism" },
-  // { label: "Arbitrum", chainId: 42161, icon: "arbitrum-one" },
   { label: "Etherlink Testnet", chainId: 42793, icon: "etherlink" },
 ] as const;
 
 const tokens = [
-  { value: "eth", label: "Ether", symbol: "ETH", icon: "eth", decimal: 18 },
-  // { value: "0x1d17cbcf0d6d143135ae902365d2e5e2a16538d4", label: "USDC", symbol: "USDC", icon: "usdc", decimal: 18 },
-  // { value: "0x68f180fcce6836688e9084f035309e29bf0a2095", label: "Tether", symbol: "USDT", icon: "usdt", decimal: 18 },
-  // { value: "0xeeeeeb57642040be42185f49c52f7e9b38f8eeee", label: "Optimism", symbol: "OP", icon: "op", decimal: 18 },
   {
     value: "0x4C2AA252BEe766D3399850569713b55178934849",
     label: "USDC Testnet",
@@ -35,25 +28,17 @@ const tokens = [
     icon: "usdc",
     decimal: 6,
   },
+  {
+    value: "0x",
+    label: "Tezos Testnet",
+    symbol: "XTZ",
+    icon: "xtz",
+    decimal: 18,
+  },
 ] as const;
-
-// [Usuario inicia swap de USDC en Etherlink]
-//         ↓
-// [AtomicSwapIntent asegura la operación con hashlock]
-//         ↓
-// [Fusion+ detecta la liberación del secreto]
-//         ↓
-// [Relayer ejecuta swap USDC → USDT en Optimism]
-//         ↓
-// [Usuario recibe USDT en red destino]
-//Con fusion+ en ehterlink cross-chain. Como fusion es chimbin y aun no tiene etherlink tambien hay que hacer un tal Atomic Swap with Hashlock/Timelock for Intent-Based Execution
 
 const ReceivePage: NextPage = () => {
   const { address, connector } = useAccount();
-
-  // const { data: balance, isLoading } = useWatchBalance({
-  //   address,
-  // });
 
   //states
   const [fromNetwork, setFromNetwork] = useState<string>("");
@@ -62,11 +47,14 @@ const ReceivePage: NextPage = () => {
   const [toToken, setToToken] = useState<string>("");
   const [fromAmount, setFromAmount] = useState<string>("");
 
-  //TODO: seguir avergiando lo del cross chain swap
   const [showLongAddress, setShowLongAddress] = useState<boolean>(false);
 
   //smart contract
   const { data: swapFactoryContract, isLoading } = useDeployedContractInfo({ contractName: "SwapFactory" });
+
+  const { data: balance, isLoading: balanceLoading } = useWatchBalance({
+    address,
+  });
 
   //effects
   useEffect(() => {
@@ -75,11 +63,51 @@ const ReceivePage: NextPage = () => {
     });
   }, []);
 
+  useEffect(() => {
+    if (fromNetwork && toNetwork && fromToken && toToken) {
+      if (fromNetwork === toNetwork) {
+        if (fromToken === toToken) {
+          const remainingToken = tokens.find(t => t.value !== fromToken);
+          if (remainingToken) {
+            setToToken(remainingToken.value);
+          }
+        }
+      }
+    }
+  }, [fromNetwork, toNetwork, fromToken, toToken]);
+
   //memos
   const tokenSelected = useMemo(() => {
     return tokens.find(t => t.value === fromToken);
   }, [fromToken]);
 
+  //functions
+  // const handleAddToken = async () => {
+  //   try {
+  //     if (window.ethereum) {
+  //       await window.ethereum.request({
+  //         method: "wallet_watchAsset",
+  //         params: {
+  //           type: "ERC20",
+  //           options: {
+  //             address: "0x4C2AA252BEe766D3399850569713b55178934849",
+  //             symbol: "USDC",
+  //             decimals: 6,
+  //           },
+  //         },
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("No se pudo agregar el token:", error);
+  //   }
+  // };
+
+  // https://copilot.microsoft.com/chats/ZZabzPjCHvnaNdhprDd2Z
+
+  //TODO: quitar el loader al inciio de no tener un token
+  //TODO: agregar el balance para reenviarlo a la faucet si no tiene plata
+
+  //TODO: SEGUIR MEJORANDO EL SWAP FORM. lO QUE me recomendo copilot es haceer el realyer a traves del backend despues de llamar para que asi se pueda mantenr un flujo steless
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 p-4">
       <div className="max-w-2xl mx-auto space-y-6">
@@ -104,16 +132,14 @@ const ReceivePage: NextPage = () => {
 
           <CardContent className="space-y-6">
             {/* Balance session */}
-            {/* {isLoading || balance === undefined ? (
+            {balanceLoading || balance === undefined ? (
               <div className="w-full flex justify-center gap-2">
                 <Loader className="animate-spin" />
                 <span className="text-sm font-semibold">Loading Balance...</span>
               </div>
             ) : parseFloat(formatEther(balance.value ?? 0n)) < 0 ? null : (
-              <div className="w-full flex justify-center gap-2">
-                <DialogChangeOp />
-              </div>
-            )} */}
+              <div className="w-full flex justify-center gap-2">{/* <DialogChangeOp /> */}</div>
+            )}
 
             <div className="flex space-y-2 gap-4">
               {/* Origin Network */}
@@ -264,14 +290,6 @@ const ReceivePage: NextPage = () => {
               </div>
             )}
 
-            {/* <Button
-              onClick={handleSubmit}
-              className="w-full bg-gradient"
-              size="lg"
-              disabled={fromNetwork === "" || toNetwork === ""}
-            >
-              Generate order
-            </Button> */}
             {isLoading || address === undefined || tokenSelected === undefined ? (
               <div className="flex justify-center">
                 <Loader className="animate-spin" />
@@ -281,8 +299,11 @@ const ReceivePage: NextPage = () => {
                 <DialogSwapProgress
                   address={address}
                   factoryAddress={swapFactoryContract?.address}
+                  fromNetworkId={fromNetwork}
                   fromTokenAddress={fromToken}
                   fromAmount={fromAmount}
+                  toNetworkId={toNetwork}
+                  toTokenAddress={toToken}
                   decimal={tokenSelected.decimal}
                 />
               </div>
